@@ -28,7 +28,7 @@ TOOLS = [
             "properties": {
                 "file_path": {
                     "type": "string", 
-                    "description": "File path to the Visio diagram"
+                    "description": "File path to the Visio diagram or 'active' to use the active document"
                 },
                 "analysis_type": {
                     "type": "string",
@@ -48,7 +48,7 @@ TOOLS = [
             "properties": {
                 "file_path": {
                     "type": "string", 
-                    "description": "File path to the Visio diagram"
+                    "description": "File path to the Visio diagram or 'active' to use the active document"
                 },
                 "operation": {
                     "type": "string",
@@ -60,7 +60,7 @@ TOOLS = [
                     "description": "Data for the shape operation"
                 }
             },
-            "required": ["file_path", "operation"]
+            "required": ["file_path", "operation", "shape_data"]
         }
     },
     {
@@ -79,7 +79,7 @@ TOOLS = [
             "properties": {
                 "file_path": {
                     "type": "string", 
-                    "description": "File path to the Visio diagram"
+                    "description": "File path to the Visio diagram or 'active' to use the active document"
                 },
                 "shape_ids": {
                     "type": "array",
@@ -90,6 +90,88 @@ TOOLS = [
                 }
             },
             "required": ["file_path"]
+        }
+    },
+    {
+        "name": "create_new_diagram",
+        "description": "Create a new Visio diagram from a template",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "type": "string",
+                    "description": "Template to use for the new diagram",
+                    "default": "Basic.vst"
+                },
+                "save_path": {
+                    "type": "string",
+                    "description": "Path where the new diagram should be saved"
+                }
+            }
+        }
+    },
+    {
+        "name": "save_diagram",
+        "description": "Save the current Visio diagram",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to save the diagram, or 'active' to save the currently active document"
+                }
+            }
+        }
+    },
+    {
+        "name": "get_available_stencils",
+        "description": "Get a list of available Visio stencils",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "name": "get_shapes_on_page",
+        "description": "Get detailed information about all shapes on a page",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the Visio diagram or 'active' to use the active document",
+                    "default": "active"
+                },
+                "page_index": {
+                    "type": "integer",
+                    "description": "Index of the page to get shapes from",
+                    "default": 1
+                }
+            }
+        }
+    },
+    {
+        "name": "export_diagram",
+        "description": "Export a Visio diagram to another format (PNG, JPG, PDF, SVG)",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the Visio diagram or 'active' to use the active document",
+                    "default": "active"
+                },
+                "format": {
+                    "type": "string",
+                    "description": "Export format",
+                    "enum": ["png", "jpg", "pdf", "svg"],
+                    "default": "png"
+                },
+                "output_path": {
+                    "type": "string",
+                    "description": "Path to save the exported file"
+                }
+            }
         }
     }
 ]
@@ -229,6 +311,73 @@ async def process_message(message: Dict[str, Any]) -> Dict[str, Any]:
                 "result": result
             }
             logger.debug(f"verify_connections response completed")
+            return response
+
+        # Handle create_new_diagram method
+        elif method == "create_new_diagram":
+            template = params.get("template", "Basic.vst")
+            save_path = params.get("save_path")
+            
+            result = visio_service.create_new_diagram(template, save_path)
+            response = {
+                "jsonrpc": "2.0",
+                "id": message_id,
+                "result": result
+            }
+            logger.debug(f"create_new_diagram response completed")
+            return response
+        
+        # Handle save_diagram method
+        elif method == "save_diagram":
+            file_path = params.get("file_path")
+            
+            result = visio_service.save_diagram(file_path)
+            response = {
+                "jsonrpc": "2.0",
+                "id": message_id,
+                "result": result
+            }
+            logger.debug(f"save_diagram response completed")
+            return response
+        
+        # Handle get_available_stencils method
+        elif method == "get_available_stencils":
+            result = visio_service.get_available_stencils()
+            response = {
+                "jsonrpc": "2.0",
+                "id": message_id,
+                "result": result
+            }
+            logger.debug(f"get_available_stencils response completed")
+            return response
+        
+        # Handle get_shapes_on_page method
+        elif method == "get_shapes_on_page":
+            file_path = params.get("file_path", "active")
+            page_index = params.get("page_index", 1)
+            
+            result = visio_service.get_shapes_on_page(file_path, page_index)
+            response = {
+                "jsonrpc": "2.0",
+                "id": message_id,
+                "result": result
+            }
+            logger.debug(f"get_shapes_on_page response completed")
+            return response
+        
+        # Handle export_diagram method
+        elif method == "export_diagram":
+            file_path = params.get("file_path", "active")
+            format = params.get("format", "png")
+            output_path = params.get("output_path")
+            
+            result = visio_service.export_diagram(file_path, format, output_path)
+            response = {
+                "jsonrpc": "2.0",
+                "id": message_id,
+                "result": result
+            }
+            logger.debug(f"export_diagram response completed")
             return response
         
         # Handle method not found

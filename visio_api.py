@@ -23,6 +23,22 @@ class VerifyConnectionsRequest(BaseModel):
     file_path: str
     shape_ids: Optional[List[str]] = None
 
+class CreateDiagramRequest(BaseModel):
+    template: Optional[str] = "Basic.vst"
+    save_path: Optional[str] = None
+
+class SaveDiagramRequest(BaseModel):
+    file_path: Optional[str] = None
+
+class ShapesRequest(BaseModel):
+    file_path: Optional[str] = "active"
+    page_index: Optional[int] = 1
+
+class ExportDiagramRequest(BaseModel):
+    file_path: Optional[str] = "active"
+    format: Optional[str] = "png"
+    output_path: Optional[str] = None
+
 # Define your endpoints with proper operation_id values
 @app.post("/analyze-diagram", operation_id="analyze_visio_diagram")
 async def analyze_diagram(request: AnalyzeDiagramRequest):
@@ -63,4 +79,54 @@ async def verify_connections(request: VerifyConnectionsRequest):
     from services.visio_service import VisioService
     visio_service = VisioService()
     result = visio_service.verify_connections(request.file_path, request.shape_ids)
+    return result
+
+@app.post("/create-diagram", operation_id="create_new_diagram")
+async def create_diagram(request: CreateDiagramRequest):
+    """
+    Create a new Visio diagram from a template
+    """
+    from services.visio_service import VisioService
+    visio_service = VisioService()
+    result = visio_service.create_new_diagram(request.template, request.save_path)
+    return result
+
+@app.post("/save-diagram", operation_id="save_diagram")
+async def save_diagram(request: SaveDiagramRequest):
+    """
+    Save the current Visio diagram
+    """
+    from services.visio_service import VisioService
+    visio_service = VisioService()
+    result = visio_service.save_diagram(request.file_path)
+    return result
+
+@app.get("/available-stencils", operation_id="get_available_stencils")
+async def get_available_stencils():
+    """
+    Get a list of available Visio stencils
+    """
+    from services.visio_service import VisioService
+    visio_service = VisioService()
+    result = visio_service.get_available_stencils()
+    return result
+
+@app.post("/get-shapes", operation_id="get_shapes_on_page")
+async def get_shapes_on_page(request: ShapesRequest):
+    """
+    Get detailed information about all shapes on a page
+    """
+    from services.visio_service import VisioService
+    visio_service = VisioService()
+    result = visio_service.get_shapes_on_page(request.file_path, request.page_index)
+    return result
+
+@app.post("/export-diagram", operation_id="export_diagram")
+async def export_diagram(request: ExportDiagramRequest):
+    """
+    Export a Visio diagram to another format (PNG, JPG, PDF, SVG)
+    """
+    from services.visio_service import VisioService
+    visio_service = VisioService()
+    result = visio_service.export_diagram(request.file_path, request.format, request.output_path)
     return result 

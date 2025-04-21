@@ -1,16 +1,6 @@
-FROM python:3.12-slim
+FROM python:3.9-slim
 
-# Build arguments
-ARG PORT=8050
-
-# Set working directory
 WORKDIR /app
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PORT=${PORT} \
-    TRANSPORT=sse \
-    HOST=0.0.0.0
 
 # Copy requirements file
 COPY requirements.txt .
@@ -21,8 +11,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Expose port
-EXPOSE ${PORT}
+# Create directory for Visio files
+RUN mkdir -p /visio-files
 
-# Set entrypoint
-ENTRYPOINT ["python", "mcp_server.py"] 
+# Expose port for FastAPI
+EXPOSE 8050
+
+# Command to run the FastAPI application
+CMD ["python", "mcp_server.py"] 

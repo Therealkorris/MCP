@@ -1,134 +1,157 @@
-# MCP-Visio: Microsoft Visio Integration for AI Agents
+# MCP-Visio Server
 
-MCP-Visio is a server that implements the Model Context Protocol (MCP) to enable AI agents to interact with Microsoft Visio diagrams. It provides tools for analyzing, modifying, and working with Visio diagrams programmatically.
-
-## Features
-
-- **Analyze Visio Diagrams**: Extract information about shapes, connections, and text
-- **Modify Diagrams**: Add, update, or delete shapes and connections
-- **Verify Connections**: Check connections between shapes
-- **Ollama Integration**: Leverage local language models for diagram analysis and suggestions
+A powerful server that integrates Microsoft Visio with AI assistants through MCP (Machine Communication Protocol).
 
 ## Architecture
 
-- **MCP Server**: Implements the Model Context Protocol for AI integration
-- **Visio Service**: Handles all Visio-related operations via COM automation
-- **Ollama Service**: Provides AI capabilities using local models
+The MCP-Visio system consists of two main components:
+
+1. **MCP Server**: A containerized service that provides API endpoints for AI assistants to interact with Visio diagrams.
+   
+2. **Visio Relay Service**: A local service that runs on the Windows host with Visio installed and provides communication between the MCP Server and the Visio application.
+
+```
+  ┌───────────────┐          ┌───────────────┐         ┌───────────────┐
+  │    AI Agent   │  <--->   │   MCP Server  │  <--->  │ Visio Relay   │  <--->  Microsoft Visio
+  │  (Claude/GPT) │          │  (Container)  │         │   Service     │         (Windows Host)
+  └───────────────┘          └───────────────┘         └───────────────┘
+```
+
+## Features
+
+- **Diagram Analysis**: Extract shapes, connections, text, and layout information
+- **Diagram Modification**: Add, update, or delete shapes and connections
+- **Active Document Access**: Work with the current open Visio document
+- **Connection Verification**: Verify connections between shapes
+- **Document Management**: Create new diagrams, save diagrams
+- **Shape Management**: Get detailed shape information
+- **AI Integration**: Integrate diagram analysis with AI models
 
 ## Prerequisites
 
-- Windows 10/11 (required for Microsoft Visio)
-- Python 3.11+ 
-- Microsoft Visio (licensed version)
-- Ollama (optional, for AI features)
+- Windows OS with Microsoft Visio installed
+- Docker Desktop for Windows
+- Python 3.8+ installed on the host
+- Network connectivity between components
 
-## Installation
+## Setup Instructions
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/yourusername/mcp-visio.git
-   cd mcp-visio
-   ```
+### 1. Clone the Repository
 
-2. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. Create a `.env` file based on `env.example`:
-   ```
-   cp env.example .env
-   ```
-
-4. Configure your environment variables in the `.env` file
-
-## Running the Server
-
-### Local Mode
-
-Run the server with Server-Sent Events (SSE) transport:
-
-```
-python src/main.py --transport sse --host 0.0.0.0 --port 8050
+```bash
+git clone https://github.com/Therealkorris/mcp-visio.git
+cd mcp-visio
 ```
 
-Or use STDIO transport:
+### 2. Start the MCP-Visio System
 
-```
-python src/main.py --transport stdio
-```
+The system is now managed through a single batch file:
 
-### Docker Mode
-
-Build and run using Docker Compose:
-
-```
-docker-compose up -d
+```bash
+run_mcp_visio.bat
 ```
 
-This will start the MCP-Visio server in a Docker container, connecting to the local Visio instance on your Windows host.
+This will present you with a menu to:
+1. Start everything (both relay and MCP server)
+2. Start only the Visio relay service
+3. Start only the MCP Docker container
+4. Run tests
+5. Stop all services
 
-## Integration with MCP Clients
+### 3. Testing the Connection
 
-### SSE Configuration
+To test if everything is working correctly:
 
-Once you have the server running with SSE transport, you can connect to it using this configuration:
+```bash
+run_mcp_visio.bat test
+```
 
-```json
-{
-  "mcpServers": {
-    "visio": {
-      "transport": "sse",
-      "serverUrl": "http://localhost:8050/sse"
+or select option 4 from the menu.
+
+## API Features
+
+The MCP-Visio server provides the following tools for AI assistants:
+
+- `analyze_visio_diagram`: Analyze shapes, connections, and text in a diagram
+- `modify_visio_diagram`: Add, update, or delete shapes and connections
+- `get_active_document`: Get information about the current Visio document
+- `verify_connections`: Verify connections between shapes
+- `create_new_diagram`: Create a new Visio diagram from a template
+- `save_diagram`: Save the current diagram to disk
+- `get_available_stencils`: Get a list of available Visio stencils
+- `get_shapes_on_page`: Get detailed information about all shapes on a page
+- `export_diagram`: Export a diagram to another format (PNG, JPG, PDF)
+
+## Usage Examples
+
+### Analyzing a Diagram
+
+```python
+import requests
+
+response = requests.post("http://localhost:8050", json={
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "analyze_visio_diagram",
+    "params": {
+        "file_path": "active",
+        "analysis_type": "all"
     }
-  }
-}
+})
+
+result = response.json()
+print(result)
 ```
 
-### STDIO Configuration
+### Adding a Shape
 
-For Claude Desktop, Windsurf, or other MCP clients, use this configuration:
+```python
+import requests
 
-```json
-{
-  "mcpServers": {
-    "visio": {
-      "command": "python",
-      "args": ["path/to/mcp-visio/src/main.py"],
-      "env": {
-        "TRANSPORT": "stdio",
-        "VISIO_SERVICE_HOST": "localhost",
-        "VISIO_SERVICE_PORT": "8051",
-        "OLLAMA_API_URL": "http://localhost:11434",
-        "OLLAMA_MODEL": "llama3"
-      }
+response = requests.post("http://localhost:8050", json={
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "modify_visio_diagram",
+    "params": {
+        "file_path": "active",
+        "operation": "add_shape",
+        "shape_data": {
+            "master_name": "Rectangle",
+            "stencil_name": "Basic Shapes.vss",
+            "page_index": 1,
+            "x": 4.0,
+            "y": 4.0,
+            "text": "New Shape"
+        }
     }
-  }
-}
+})
+
+result = response.json()
+print(result)
 ```
 
-## Testing
-
-Run the test client to verify server functionality:
+## File Structure
 
 ```
-python test_client.py
+mcp-visio/
+├── src/                          # Server source code
+│   ├── services/                 # Service implementations
+│   │   ├── visio_service.py      # Visio service implementation
+│   │   ├── mcp_service.py        # MCP service implementation
+│   │   └── ollama_service.py     # AI integration service
+├── visio-files/                  # Directory for Visio files
+├── Dockerfile.windows            # Docker configuration for Windows
+├── host_visio_relay.py           # Visio relay service
+├── run_mcp_visio.bat             # Main execution script
+├── test_visio_connection.py      # Test script
+├── visio_api.py                  # API definitions
+└── README.md                     # This documentation
 ```
-
-## Tools Available
-
-The MCP-Visio server provides the following tools to AI agents:
-
-1. **analyze_visio_diagram**: Get detailed information about a Visio diagram
-2. **modify_visio_diagram**: Make changes to a Visio diagram
-3. **get_active_document**: Get information about the currently open Visio document
-4. **verify_connections**: Check connections between shapes in a diagram
 
 ## License
 
-[MIT License](LICENSE)
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgements
+## Contributing
 
-- Based on the Model Context Protocol specification by Anthropic
-- Inspired by various MCP server implementations in the community 
+Contributions are welcome! Please feel free to submit a Pull Request. 

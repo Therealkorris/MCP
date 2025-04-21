@@ -135,6 +135,29 @@ async def options_mcp(request: Request):
     }
     return Response(status_code=204, headers=headers)
 
-def run_sse_transport(host: str, port: int):
-    """Run the SSE transport."""
-    uvicorn.run(app, host=host, port=port) 
+def run_sse_transport(host: str, port: int, debug: bool = False):
+    """Run the SSE transport with optional auto-reload."""
+    import os
+    from pathlib import Path
+    
+    if debug:
+        # Set up monitored directories for auto-reload
+        watch_dirs = [".", "src", "src/services", "src/transports"]
+        reload_dirs = [os.path.abspath(dir) for dir in watch_dirs]
+        
+        logger.info(f"Auto-reload enabled for MCP server. Monitoring directories: {watch_dirs}")
+        logger.info("Make changes to Python files to trigger reload")
+        
+        # Ensure __init__.py files exist for proper module imports
+        for dir_path in ["src", "src/services", "src/transports"]:
+            init_file = os.path.join(dir_path, "__init__.py")
+            if not os.path.exists(init_file):
+                with open(init_file, "w") as f:
+                    pass  # Create empty __init__.py file
+        
+        # Run with auto-reload enabled using import string format
+        uvicorn.run("src.transports.sse_transport:app", host=host, port=port, reload=True, reload_dirs=reload_dirs)
+    else:
+        # Run in standard mode without auto-reload
+        logger.info("Running in standard mode (no auto-reload)")
+        uvicorn.run(app, host=host, port=port) 

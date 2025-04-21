@@ -56,16 +56,27 @@ def parse_args():
         help="Port to listen on when using SSE transport"
     )
     
+    # Debug mode
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        default=os.getenv("DEBUG", "false").lower() == "true",
+        help="Enable debug mode with auto-reload"
+    )
+    
     return parser.parse_args()
 
 def main():
     """Main entry point for the MCP-Visio server."""
     args = parse_args()
     
+    if args.debug:
+        logger.info("Debug mode enabled with auto-reload")
+    
     # Determine which transport to use
     if args.transport == "sse":
         logger.info(f"Starting MPC-Visio server with SSE transport on {args.host}:{args.port}")
-        run_sse_transport(args.host, args.port)
+        run_sse_transport(args.host, args.port, debug=args.debug)
     elif args.transport == "stdio":
         logger.info("Starting MPC-Visio server with STDIO transport")
         run_stdio_transport()

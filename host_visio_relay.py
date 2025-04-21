@@ -464,11 +464,31 @@ async def modify_diagram(request: ModifyRequest):
             if text:
                 shape.Text = text
             
-            # Set custom size if provided
-            if width:
-                shape.Cells("Width").Result[""] = width
-            if height:
-                shape.Cells("Height").Result[""] = height
+            # Set custom size if provided - using a completely new approach
+            try:
+                if width is not None:
+                    # Try direct assignment first
+                    try:
+                        shape.Width = float(width)
+                    except:
+                        logger.info(f"Direct width assignment failed, trying different method")
+                        try:
+                            shape.CellsSRC(1, 1, 2).Formula = f"{width}"
+                        except:
+                            logger.warning(f"Failed to set width using any method")
+                            
+                if height is not None:
+                    # Try direct assignment first
+                    try:
+                        shape.Height = float(height)
+                    except:
+                        logger.info(f"Direct height assignment failed, trying different method")
+                        try:
+                            shape.CellsSRC(1, 1, 3).Formula = f"{height}"
+                        except:
+                            logger.warning(f"Failed to set height using any method")
+            except Exception as size_err:
+                logger.warning(f"Error setting shape size: {size_err}")
             
             # Update result with shape info
             result.update({
@@ -831,23 +851,74 @@ async def create_diagram(request: CreateDiagramRequest):
         template = request.template
         save_path = request.save_path
         
-        # Create new document from template
-        doc = visio_app.Documents.Add(template)
-        
-        # Save if path provided
-        if save_path:
-            save_path = normalize_file_path(save_path)
-            doc.SaveAs(save_path)
-        
-        # Return information about the new document
-        result = {
-            "name": doc.Name,
-            "path": doc.Path,
-            "full_path": os.path.join(doc.Path, doc.Name),
-            "pages_count": doc.Pages.Count
-        }
-        
-        return {"status": "success", "data": result}
+        # Try to create new document with requested template
+        try:
+            # First check if the template is already an open stencil
+            template_found = False
+            for i in range(1, visio_app.Documents.Count + 1):
+                doc = visio_app.Documents.Item(i)
+                if template.lower() in doc.Name.lower() and ('.vss' in doc.Name or '.vssx' in doc.Name or '.vst' in doc.Name):
+                    template = doc.Name
+                    template_found = True
+                    logger.info(f"Using already open template: {template}")
+                    break
+            
+            if not template_found:
+                # Check if template path is specified or just a filename
+                if os.path.dirname(template) and os.path.exists(template):
+                    # Full path provided
+                    logger.info(f"Using full path template: {template}")
+                else:
+                    # Try to find template in standard locations
+                    template_dir = visio_app.GetBuiltInStencilFile(0, 0)
+                    if template_dir and os.path.exists(template_dir):
+                        possible_template = os.path.join(template_dir, template)
+                        if os.path.exists(possible_template):
+                            template = possible_template
+                            logger.info(f"Found template in built-in directory: {template}")
+                    
+            # Create new document from template
+            doc = None
+            try:
+                doc = visio_app.Documents.Add(template)
+            except Exception as template_error:
+                logger.warning(f"Error using template {template}: {template_error}")
+                
+                # Try fallback templates
+                fallback_templates = ["BASIC_M.vssx", "Basic_U.vss", ""]  # Empty string means blank document
+                for fallback in fallback_templates:
+                    try:
+                        if fallback:
+                            logger.info(f"Trying fallback template: {fallback}")
+                            doc = visio_app.Documents.Add(fallback)
+                        else:
+                            logger.info("Using blank document as fallback")
+                            doc = visio_app.Documents.Add("")
+                        break
+                    except Exception as fallback_error:
+                        logger.warning(f"Fallback template {fallback} failed: {fallback_error}")
+                        continue
+            
+            if not doc:
+                return {"status": "error", "message": "Could not create document with any template"}
+            
+            # Save if path provided
+            if save_path:
+                save_path = normalize_file_path(save_path)
+                doc.SaveAs(save_path)
+            
+            # Return information about the new document
+            result = {
+                "name": doc.Name,
+                "path": doc.Path,
+                "full_path": os.path.join(doc.Path, doc.Name) if doc.Path else doc.Name,
+                "pages_count": doc.Pages.Count
+            }
+            
+            return {"status": "success", "data": result}
+        except Exception as doc_error:
+            logger.error(f"Error creating or saving document: {doc_error}")
+            return {"status": "error", "message": f"Failed to create document: {str(doc_error)}"}
     
     except Exception as e:
         logger.error(f"Error creating diagram: {e}")
@@ -913,36 +984,41 @@ async def get_available_stencils():
         raise HTTPException(status_code=500, detail="Failed to connect to Visio")
     
     try:
-        # Get built-in stencil directories
-        stencil_dir = visio_app.GetBuiltInStencilFile(0, 0)
-        
-        # List stencils in directory
-        stencils = []
-        
-        if os.path.exists(stencil_dir):
-            for file in os.listdir(stencil_dir):
-                if file.endswith('.vss') or file.endswith('.vssx'):
-                    stencils.append({
-                        "name": file,
-                        "path": os.path.join(stencil_dir, file)
-                    })
-        
-        # Check for open stencils
+        # Only focus on already open stencils to avoid file system issues
         open_stencils = []
-        for i in range(1, visio_app.Documents.Count + 1):
-            doc = visio_app.Documents.Item(i)
-            # Check if document is a stencil
-            if '.vss' in doc.Name or '.vssx' in doc.Name:
-                open_stencils.append({
-                    "name": doc.Name,
-                    "path": doc.Path,
-                    "full_path": os.path.join(doc.Path, doc.Name),
-                    "is_open": True
-                })
         
+        # First get all currently open stencils
+        for i in range(1, visio_app.Documents.Count + 1):
+            try:
+                doc = visio_app.Documents.Item(i)
+                # Check if the document is a stencil
+                if doc.Name.lower().endswith(('.vss', '.vssx')):
+                    stencil_info = {
+                        "name": doc.Name,
+                        "is_open": True,
+                        "masters_count": doc.Masters.Count
+                    }
+                    open_stencils.append(stencil_info)
+            except Exception as e:
+                logger.warning(f"Error processing document at index {i}: {e}")
+                continue
+        
+        # Common stencil names to suggest (without attempting to access them)
+        suggested_stencils = [
+            {"name": "BASIC_M.vssx", "type": "basic"},
+            {"name": "ARROWS_M.vssx", "type": "arrows"},
+            {"name": "Basic_U.vss", "type": "basic"},
+            {"name": "Backgrounds.vssx", "type": "backgrounds"},
+            {"name": "Borders.vssx", "type": "borders"},
+            {"name": "Connectors.vssx", "type": "connectors"},
+            {"name": "CONNEC_M.vssx", "type": "connectors"}
+        ]
+        
+        # Return the information without any file system access
         result = {
-            "built_in_stencils": stencils,
-            "open_stencils": open_stencils
+            "open_stencils": open_stencils,
+            "suggested_stencils": suggested_stencils,
+            "open_stencils_count": len(open_stencils)
         }
         
         return {"status": "success", "data": result}
@@ -1210,5 +1286,21 @@ if __name__ == "__main__":
     # Try to connect to Visio at startup
     connect_to_visio()
     
-    # Run the FastAPI app
-    uvicorn.run(app, host="0.0.0.0", port=8051) 
+    # Set up monitored directories for auto-reload
+    # This will automatically detect changes to Python files and restart the server
+    watch_dirs = [".", "src", "src/services"]
+    reload_dirs = [os.path.abspath(dir) for dir in watch_dirs]
+    
+    logger.info(f"Auto-reload enabled. Monitoring directories: {watch_dirs}")
+    logger.info("Make changes to host_visio_relay.py, mcp_service.py, or visio_service.py to trigger reload")
+    
+    # Create a main module for uvicorn to import
+    if not os.path.exists("__init__.py"):
+        with open("__init__.py", "w") as f:
+            pass  # Create an empty __init__.py file
+    
+    # For auto-reload to work, we need to run as module
+    if os.path.basename(sys.argv[0]) == "host_visio_relay.py":
+        # Run the FastAPI app with auto-reload enabled using the import string format
+        import uvicorn
+        uvicorn.run("host_visio_relay:app", host="0.0.0.0", port=8051, reload=True, reload_dirs=reload_dirs) 

@@ -129,4 +129,14 @@ async def export_diagram(request: ExportDiagramRequest):
     from services.visio_service import VisioService
     visio_service = VisioService()
     result = visio_service.export_diagram(request.file_path, request.format, request.output_path)
+    return result
+
+@app.get("/available-masters", operation_id="get_available_masters")
+async def get_available_masters():
+    """
+    Get a list of available master shapes from all open stencils
+    """
+    from services.visio_service import VisioService
+    visio_service = VisioService()
+    result = visio_service.get_available_masters()
     return result 

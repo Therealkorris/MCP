@@ -1,0 +1,80 @@
+2025-04-21 03:08:02,744 - __main__ - INFO - Creating MCP server from Visio API
+2025-04-21 03:08:02,748 - __main__ - INFO - Mounting MCP server at /mcp
+2025-04-21 03:08:02,748 - fastapi_mcp.server - INFO - MCP server listening at /mcp
+2025-04-21 03:08:02,748 - __main__ - INFO - Starting server on 0.0.0.0:8050
+2025-04-21 03:08:41,398 - __main__ - INFO - Creating MCP server from Visio API
+2025-04-21 03:08:41,402 - __main__ - INFO - Mounting MCP server at /mcp
+2025-04-21 03:08:41,402 - fastapi_mcp.server - INFO - MCP server listening at /mcp
+2025-04-21 03:08:41,402 - __main__ - INFO - Starting server on 0.0.0.0:8050
+2025-04-21 03:08:52,364 - __main__ - INFO - Creating MCP server from Visio API
+2025-04-21 03:08:52,367 - __main__ - INFO - Mounting MCP server at /mcp
+2025-04-21 03:08:52,368 - fastapi_mcp.server - INFO - MCP server listening at /mcp
+2025-04-21 03:08:52,368 - __main__ - INFO - Starting server on 0.0.0.0:8050
+2025-04-21 03:10:15,689 - __main__ - INFO - Creating MCP server from Visio API
+2025-04-21 03:10:15,693 - __main__ - INFO - Mounting MCP server at /mcp
+2025-04-21 03:10:15,693 - fastapi_mcp.server - INFO - MCP server listening at /mcp
+2025-04-21 03:10:15,693 - __main__ - INFO - Starting server on 0.0.0.0:8050
+2025-04-21 03:10:21,188 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:10:22,701 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:10:23,773 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:10:24,301 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:10:24,777 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:31:52,737 - __main__ - INFO - Creating MCP server from Visio API
+2025-04-21 03:31:52,741 - __main__ - INFO - Mounting MCP server at /mcp
+2025-04-21 03:31:52,741 - fastapi_mcp.server - INFO - MCP server listening at /mcp
+2025-04-21 03:31:52,741 - __main__ - INFO - Starting server on 0.0.0.0:8050
+2025-04-21 03:31:58,981 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:32:34,266 - __main__ - INFO - Creating MCP server from Visio API
+2025-04-21 03:32:34,269 - __main__ - INFO - Mounting MCP server at /mcp
+2025-04-21 03:32:34,269 - fastapi_mcp.server - INFO - MCP server listening at /mcp
+2025-04-21 03:32:34,270 - __main__ - INFO - Starting server on 0.0.0.0:8050
+2025-04-21 03:32:42,639 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:33:14,590 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:33:14,636 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:33:18,745 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:33:22,990 - httpx - INFO - HTTP Request: POST http://apiserver/get-shapes "HTTP/1.1 200 OK"
+2025-04-21 03:33:56,723 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:33:56,723 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:34:00,809 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:34:02,869 - httpx - INFO - HTTP Request: GET http://apiserver/available-stencils "HTTP/1.1 200 OK"
+2025-04-21 03:34:06,487 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:34:06,488 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:34:10,577 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:34:14,706 - httpx - INFO - HTTP Request: POST http://apiserver/modify-diagram "HTTP/1.1 200 OK"
+2025-04-21 03:34:17,867 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:34:17,867 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:34:21,971 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:34:26,148 - httpx - INFO - HTTP Request: POST http://apiserver/modify-diagram "HTTP/1.1 200 OK"
+2025-04-21 03:34:29,125 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:34:29,126 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:34:33,199 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:34:37,381 - httpx - INFO - HTTP Request: POST http://apiserver/modify-diagram "HTTP/1.1 200 OK"
+2025-04-21 03:34:40,416 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:34:40,416 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:34:44,523 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:34:48,706 - httpx - INFO - HTTP Request: POST http://apiserver/modify-diagram "HTTP/1.1 200 OK"
+2025-04-21 03:34:52,123 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:34:52,123 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:34:56,203 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:35:00,325 - httpx - INFO - HTTP Request: POST http://apiserver/modify-diagram "HTTP/1.1 200 OK"
+2025-04-21 03:35:02,612 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:35:02,613 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:35:06,703 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:35:10,948 - httpx - INFO - HTTP Request: POST http://apiserver/get-shapes "HTTP/1.1 200 OK"
+2025-04-21 03:35:14,801 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:35:14,801 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:35:18,864 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:35:23,026 - httpx - INFO - HTTP Request: POST http://apiserver/modify-diagram "HTTP/1.1 200 OK"
+2025-04-21 03:45:49,196 - __main__ - INFO - Creating MCP server from Visio API
+2025-04-21 03:45:49,199 - __main__ - INFO - Mounting MCP server at /mcp
+2025-04-21 03:45:49,199 - fastapi_mcp.server - INFO - MCP server listening at /mcp
+2025-04-21 03:45:49,199 - __main__ - INFO - Starting server on 0.0.0.0:8050
+2025-04-21 03:45:55,345 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2025-04-21 03:46:39,815 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:46:39,867 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:46:43,976 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:46:46,066 - httpx - INFO - HTTP Request: GET http://apiserver/active-document "HTTP/1.1 200 OK"
+2025-04-21 03:46:54,677 - mcp.server.lowlevel.server - INFO - Processing request of type CallToolRequest
+2025-04-21 03:46:54,677 - services.visio_service - INFO - Checking relay service at http://localhost:8051/health
+2025-04-21 03:46:58,791 - services.visio_service - INFO - Connected to Visio via relay service
+2025-04-21 03:47:03,020 - httpx - INFO - HTTP Request: POST http://apiserver/get-shapes "HTTP/1.1 200 OK"

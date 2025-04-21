@@ -565,4 +565,41 @@ class VisioService:
                 return windows_path
             
         # Return original if all else fails
-        return file_path 
+        return file_path
+    
+    def get_available_masters(self) -> Dict[str, Any]:
+        """
+        Get a list of available master shapes from all open stencils.
+        
+        Returns:
+            Dictionary with list of available master shapes by stencil
+        """
+        try:
+            if not self.is_connected:
+                if not self.connect_to_visio():
+                    return {"status": "error", "message": "Not connected to Visio"}
+            
+            # Call relay service to get available masters
+            response = requests.get(f"{self.api_url}/available-masters", timeout=30)
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("status") == "error":
+                    return {
+                        "status": "error",
+                        "message": result.get("message", "Unknown error")
+                    }
+                
+                # Return the data
+                return {
+                    "status": "success",
+                    **result.get("data", {})
+                }
+            else:
+                return {"status": "error", "message": f"Failed to get masters: {response.text}"}
+        
+        except Exception as e:
+            logger.error(f"Error getting masters: {e}")
+            logger.error(traceback.format_exc())
+            return {"status": "error", "message": str(e)} 

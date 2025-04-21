@@ -27,3 +27,16 @@
 2025-04-21 03:03:28,926 - visio-relay - INFO - Starting Visio Relay Service
 2025-04-21 03:03:28,926 - visio-relay - INFO - Connecting to Visio application...
 2025-04-21 03:03:28,932 - visio-relay - INFO - Connected to Visio application
+2025-04-21 03:30:51,706 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 03:30:51,706 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 03:30:51,711 - visio-relay - INFO - Connected to Visio application
+2025-04-21 03:32:19,442 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 03:32:19,442 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 03:32:19,449 - visio-relay - INFO - Connected to Visio application
+2025-04-21 03:34:02,868 - visio-relay - ERROR - Error getting stencils: [WinError 267] Mappenavnet er ugyldig: 'C:\\Program Files\\Microsoft Office\\Root\\Office16\\visio content\\1044\\bckgrn_m.vssx'
+2025-04-21 03:44:39,686 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 03:44:39,686 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 03:44:39,693 - visio-relay - INFO - Connected to Visio application
+2025-04-21 03:45:16,742 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 03:45:16,742 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 03:45:16,748 - visio-relay - INFO - Connected to Visio application

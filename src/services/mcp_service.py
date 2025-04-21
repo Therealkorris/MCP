@@ -53,11 +53,170 @@ TOOLS = [
                 "operation": {
                     "type": "string",
                     "description": "Type of modification to perform",
-                    "enum": ["add_shape", "update_shape", "delete_shape", "add_connection", "delete_connection"]
+                    "enum": ["add_shape", "update_shape", "delete_shape", "add_connection", "add_connector", "delete_connection"]
                 },
                 "shape_data": {
                     "type": "object",
-                    "description": "Data for the shape operation"
+                    "description": "Data for the shape operation",
+                    "oneOf": [
+                        {
+                            "title": "Add Shape Data",
+                            "type": "object",
+                            "properties": {
+                                "master_name": {
+                                    "type": "string",
+                                    "description": "Name of the master shape to add (e.g., 'Rectangle', 'Circle', 'Ellipse', 'Triangle', 'Diamond')"
+                                },
+                                "stencil_name": {
+                                    "type": "string",
+                                    "description": "Name of the stencil containing the master shape (e.g., 'Basic Shapes.vss')",
+                                    "default": "Basic Shapes.vss"
+                                },
+                                "position": {
+                                    "type": "object",
+                                    "description": "Position of the shape",
+                                    "properties": {
+                                        "x": {
+                                            "type": "number",
+                                            "description": "X-coordinate of the shape"
+                                        },
+                                        "y": {
+                                            "type": "number",
+                                            "description": "Y-coordinate of the shape"
+                                        }
+                                    }
+                                },
+                                "size": {
+                                    "type": "object",
+                                    "description": "Size of the shape",
+                                    "properties": {
+                                        "width": {
+                                            "type": "number",
+                                            "description": "Width of the shape"
+                                        },
+                                        "height": {
+                                            "type": "number",
+                                            "description": "Height of the shape"
+                                        }
+                                    }
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "description": "Text to display in the shape"
+                                },
+                                "page_index": {
+                                    "type": "integer",
+                                    "description": "Index of the page to add the shape to",
+                                    "default": 1
+                                }
+                            },
+                            "required": ["master_name"]
+                        },
+                        {
+                            "title": "Update Shape Data",
+                            "type": "object",
+                            "properties": {
+                                "shape_id": {
+                                    "type": "integer",
+                                    "description": "ID of the shape to update"
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "description": "New text for the shape"
+                                },
+                                "position": {
+                                    "type": "object",
+                                    "description": "New position of the shape",
+                                    "properties": {
+                                        "x": {
+                                            "type": "number",
+                                            "description": "X-coordinate of the shape"
+                                        },
+                                        "y": {
+                                            "type": "number",
+                                            "description": "Y-coordinate of the shape"
+                                        }
+                                    }
+                                },
+                                "size": {
+                                    "type": "object",
+                                    "description": "New size of the shape",
+                                    "properties": {
+                                        "width": {
+                                            "type": "number",
+                                            "description": "Width of the shape"
+                                        },
+                                        "height": {
+                                            "type": "number",
+                                            "description": "Height of the shape"
+                                        }
+                                    }
+                                },
+                                "page_index": {
+                                    "type": "integer",
+                                    "description": "Index of the page containing the shape",
+                                    "default": 1
+                                }
+                            },
+                            "required": ["shape_id"]
+                        },
+                        {
+                            "title": "Delete Shape Data",
+                            "type": "object",
+                            "properties": {
+                                "shape_id": {
+                                    "type": "integer",
+                                    "description": "ID of the shape to delete"
+                                },
+                                "page_index": {
+                                    "type": "integer",
+                                    "description": "Index of the page containing the shape",
+                                    "default": 1
+                                }
+                            },
+                            "required": ["shape_id"]
+                        },
+                        {
+                            "title": "Add Connector Data",
+                            "type": "object",
+                            "properties": {
+                                "from_shape_id": {
+                                    "type": "integer",
+                                    "description": "ID of the shape to connect from"
+                                },
+                                "to_shape_id": {
+                                    "type": "integer",
+                                    "description": "ID of the shape to connect to"
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "description": "Text to display on the connector"
+                                },
+                                "page_index": {
+                                    "type": "integer",
+                                    "description": "Index of the page containing the shapes",
+                                    "default": 1
+                                }
+                            },
+                            "required": ["from_shape_id", "to_shape_id"]
+                        },
+                        {
+                            "title": "Delete Connection Data",
+                            "type": "object",
+                            "properties": {
+                                "connector_id": {
+                                    "type": "integer",
+                                    "description": "ID of the connector to delete"
+                                },
+                                "page_index": {
+                                    "type": "integer",
+                                    "description": "Index of the page containing the connector",
+                                    "default": 1
+                                }
+                            },
+                            "required": ["connector_id"]
+                        }
+                    ]
                 }
             },
             "required": ["file_path", "operation", "shape_data"]
@@ -172,6 +331,14 @@ TOOLS = [
                     "description": "Path to save the exported file"
                 }
             }
+        }
+    },
+    {
+        "name": "get_available_masters",
+        "description": "Get a list of available master shapes from all open stencils",
+        "parameters": {
+            "type": "object",
+            "properties": {}
         }
     }
 ]
@@ -349,6 +516,17 @@ async def process_message(message: Dict[str, Any]) -> Dict[str, Any]:
                 "result": result
             }
             logger.debug(f"get_available_stencils response completed")
+            return response
+        
+        # Handle get_available_masters method
+        elif method == "get_available_masters":
+            result = visio_service.get_available_masters()
+            response = {
+                "jsonrpc": "2.0",
+                "id": message_id,
+                "result": result
+            }
+            logger.debug(f"get_available_masters response completed")
             return response
         
         # Handle get_shapes_on_page method

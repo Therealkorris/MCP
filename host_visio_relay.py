@@ -370,9 +370,16 @@ async def modify_diagram(request: ModifyRequest):
             if not master_name:
                 return {"status": "error", "message": "master_name is required for add_shape operation"}
             
-            x = shape_data.get("x", 4.0)
-            y = shape_data.get("y", 4.0)
+            # Get position information, use proper defaults
+            position = shape_data.get("position", {})
+            x = position.get("x", 4.0)
+            y = position.get("y", 4.0)
             text = shape_data.get("text", "")
+            
+            # Get size information if provided
+            size = shape_data.get("size", {})
+            width = size.get("width")
+            height = size.get("height")
             
             # Get stencil if specified
             stencil_name = shape_data.get("stencil_name", "Basic Shapes.vss")
@@ -380,21 +387,73 @@ async def modify_diagram(request: ModifyRequest):
             # Try to open the stencil
             try:
                 try:
+                    # Try to get already open stencil first
                     stencil = visio_app.Documents(stencil_name)
+                    logger.info(f"Using already open stencil: {stencil_name}")
                 except:
-                    # Open the stencil if not already open
+                    # Try different methods to open the stencil
                     try:
+                        # First try built-in stencil folder
                         stencil_path = os.path.join(visio_app.GetBuiltInStencilFile(0, 0), stencil_name)
-                        stencil = visio_app.Documents.OpenEx(stencil_path, 0)
-                    except:
-                        # Try fallback for built-in stencils
-                        stencil = visio_app.Documents.OpenStencil(stencil_name)
+                        if os.path.exists(stencil_path):
+                            stencil = visio_app.Documents.OpenEx(stencil_path, 0)
+                            logger.info(f"Opened stencil from built-in path: {stencil_path}")
+                        else:
+                            # Try standard method
+                            stencil = visio_app.Documents.OpenStencil(stencil_name)
+                            logger.info(f"Opened stencil using OpenStencil: {stencil_name}")
+                    except Exception as stencil_err:
+                        logger.warning(f"Error opening stencil {stencil_name}: {stencil_err}")
+                        # Fallback to Basic_U.vss which should always be available
+                        try:
+                            stencil = visio_app.Documents.OpenStencil("Basic_U.vss")
+                            logger.info(f"Fallback to Basic_U.vss stencil")
+                        except:
+                            # Last resort - try each open document to find a stencil
+                            for i in range(1, visio_app.Documents.Count + 1):
+                                doc_item = visio_app.Documents.Item(i)
+                                if ".vss" in doc_item.Name or ".vssx" in doc_item.Name:
+                                    stencil = doc_item
+                                    logger.info(f"Using already open stencil as fallback: {doc_item.Name}")
+                                    break
+                            else:
+                                return {"status": "error", "message": "Could not find any usable stencil"}
             except Exception as e:
-                return {"status": "error", "message": f"Could not open stencil: {stencil_name} - {str(e)}"}
+                return {"status": "error", "message": f"Could not open any stencil: {str(e)}"}
             
-            # Get the master shape
+            # Get the master shape - try different naming patterns
             try:
-                master = stencil.Masters.ItemU(master_name)
+                try:
+                    # Try exact name match first
+                    master = stencil.Masters.ItemU(master_name)
+                except:
+                    # Try pattern matching to find similar shape names
+                    found = False
+                    for i in range(1, stencil.Masters.Count + 1):
+                        m = stencil.Masters.Item(i)
+                        # Check for similar names (case insensitive, partial match)
+                        if master_name.lower() in m.Name.lower():
+                            master = m
+                            found = True
+                            logger.info(f"Found similar master shape: {m.Name} for request: {master_name}")
+                            break
+                    
+                    if not found:
+                        # Try common basic shapes as fallback
+                        basic_shapes = ["Rectangle", "Square", "Circle", "Ellipse", "Triangle", "Diamond", "Pentagon", "Hexagon"]
+                        for shape_name in basic_shapes:
+                            try:
+                                master = stencil.Masters.ItemU(shape_name)
+                                found = True
+                                logger.info(f"Using fallback basic shape: {shape_name}")
+                                break
+                            except:
+                                continue
+                        
+                        if not found:
+                            # Last resort: use the first master in the stencil
+                            master = stencil.Masters.Item(1)
+                            logger.info(f"Using first available master shape: {master.Name}")
             except Exception as e:
                 return {"status": "error", "message": f"Master shape not found: {master_name} in {stencil_name} - {str(e)}"}
             
@@ -404,6 +463,12 @@ async def modify_diagram(request: ModifyRequest):
             # Set text if provided
             if text:
                 shape.Text = text
+            
+            # Set custom size if provided
+            if width:
+                shape.Cells("Width").Result[""] = width
+            if height:
+                shape.Cells("Height").Result[""] = height
             
             # Update result with shape info
             result.update({
@@ -515,6 +580,108 @@ async def modify_diagram(request: ModifyRequest):
                 "from_shape_id": from_shape.ID,
                 "to_shape_id": to_shape.ID
             })
+            
+        elif operation == "add_connector":
+            # Add a connector between two shapes (more reliable method)
+            from_shape_id = shape_data.get("from_shape_id")
+            to_shape_id = shape_data.get("to_shape_id")
+            
+            if not from_shape_id or not to_shape_id:
+                return {"status": "error", "message": "from_shape_id and to_shape_id are required for add_connector operation"}
+            
+            # Find the shapes
+            from_shape = None
+            to_shape = None
+            
+            for i in range(1, page.Shapes.Count + 1):
+                shape = page.Shapes.Item(i)
+                if shape.ID == from_shape_id:
+                    from_shape = shape
+                if shape.ID == to_shape_id:
+                    to_shape = shape
+            
+            if not from_shape:
+                return {"status": "error", "message": f"From shape not found with ID: {from_shape_id}"}
+            
+            if not to_shape:
+                return {"status": "error", "message": f"To shape not found with ID: {to_shape_id}"}
+            
+            # Try to get the Dynamic Connector master
+            try:
+                # Try different methods to get connector master
+                connector_master = None
+                try:
+                    # Try to find a stencil with connectors
+                    for i in range(1, visio_app.Documents.Count + 1):
+                        doc_item = visio_app.Documents.Item(i)
+                        if ".vss" in doc_item.Name or ".vssx" in doc_item.Name:
+                            # Check masters in this stencil
+                            for j in range(1, doc_item.Masters.Count + 1):
+                                m = doc_item.Masters.Item(j)
+                                if "connector" in m.Name.lower() or "dynamic" in m.Name.lower():
+                                    connector_master = m
+                                    logger.info(f"Using connector master: {m.Name} from {doc_item.Name}")
+                                    break
+                            if connector_master:
+                                break
+                except:
+                    pass
+                
+                if not connector_master:
+                    # Fallback to opening the basic stencil
+                    try:
+                        basic_stencil = visio_app.Documents.OpenStencil("Basic_U.vss")
+                        connector_master = basic_stencil.Masters.ItemU("Dynamic connector")
+                    except:
+                        # Last resort: create with ConnectorToolDataObject
+                        connector = page.Drop(visio_app.ConnectorToolDataObject, 0, 0)
+                        has_master = False
+                else:
+                    # Drop the connector with master
+                    connector = page.Drop(connector_master, 0, 0)
+                    has_master = True
+                
+                # Connect the shapes - different methods based on how connector was created
+                if has_master:
+                    # Use proper begin/end connect methods
+                    begin_cell = connector.Cells("BeginX")
+                    end_cell = connector.Cells("EndX")
+                    
+                    # Get position of shapes
+                    from_pos_x = from_shape.Cells("PinX").Result("")
+                    from_pos_y = from_shape.Cells("PinY").Result("")
+                    to_pos_x = to_shape.Cells("PinX").Result("")
+                    to_pos_y = to_shape.Cells("PinY").Result("")
+                    
+                    # Configure connector begin and end points to be near the shapes
+                    connector.Cells("BeginX").Result[""] = from_pos_x
+                    connector.Cells("BeginY").Result[""] = from_pos_y
+                    connector.Cells("EndX").Result[""] = to_pos_x
+                    connector.Cells("EndY").Result[""] = to_pos_y
+                    
+                    # Connect the endpoints to the shapes
+                    connector.CellsSRC(7, 0, 2).GlueTo(from_shape.CellsSRC(7, 0, 0))
+                    connector.CellsSRC(7, 1, 2).GlueTo(to_shape.CellsSRC(7, 0, 0))
+                else:
+                    # Use alternate method
+                    connector.CellsU("BeginX").GlueTo(from_shape.CellsU("PinX"))
+                    connector.CellsU("EndX").GlueTo(to_shape.CellsU("PinX"))
+                
+                # Set connector text if provided
+                if "text" in shape_data:
+                    connector.Text = shape_data["text"]
+                
+                # Update result
+                result.update({
+                    "connector_id": connector.ID,
+                    "connector_name": connector.Name,
+                    "from_shape_id": from_shape.ID,
+                    "to_shape_id": to_shape.ID
+                })
+                
+            except Exception as e:
+                logger.error(f"Error creating connector: {e}")
+                return {"status": "error", "message": f"Failed to create connector: {str(e)}"}
             
         elif operation == "delete_connection":
             # Delete a connection
@@ -975,6 +1142,66 @@ async def export_diagram(request: ExportRequest):
     
     except Exception as e:
         logger.error(f"Error exporting diagram: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/available-masters")
+async def get_available_masters():
+    """
+    Get a list of available masters from all open stencils.
+    """
+    if not connect_to_visio():
+        raise HTTPException(status_code=500, detail="Failed to connect to Visio")
+    
+    try:
+        masters_by_stencil = {}
+        
+        # Check open stencils first
+        for i in range(1, visio_app.Documents.Count + 1):
+            doc = visio_app.Documents.Item(i)
+            
+            # Check if document is a stencil
+            if '.vss' in doc.Name or '.vssx' in doc.Name:
+                stencil_masters = []
+                
+                # Get all masters in this stencil
+                for j in range(1, doc.Masters.Count + 1):
+                    master = doc.Masters.Item(j)
+                    stencil_masters.append({
+                        "name": master.Name,
+                        "id": j,
+                        "type": master.Type,
+                        "one_d": master.OneD
+                    })
+                
+                masters_by_stencil[doc.Name] = stencil_masters
+        
+        # If no open stencils found, try to open basic stencil
+        if not masters_by_stencil:
+            try:
+                basic_stencil = visio_app.Documents.OpenStencil("Basic_U.vss")
+                stencil_masters = []
+                
+                # Get all masters in this stencil
+                for j in range(1, basic_stencil.Masters.Count + 1):
+                    master = basic_stencil.Masters.Item(j)
+                    stencil_masters.append({
+                        "name": master.Name,
+                        "id": j,
+                        "type": master.Type,
+                        "one_d": master.OneD
+                    })
+                
+                masters_by_stencil["Basic_U.vss"] = stencil_masters
+                
+                # Close stencil after we're done
+                basic_stencil.Close()
+            except Exception as e:
+                logger.warning(f"Error opening basic stencil: {e}")
+        
+        return {"status": "success", "data": {"masters_by_stencil": masters_by_stencil}}
+    
+    except Exception as e:
+        logger.error(f"Error getting masters: {e}")
         return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":

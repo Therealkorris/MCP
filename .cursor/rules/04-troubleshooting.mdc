@@ -1,0 +1,28 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Troubleshooting MCP-Visio Connection
+
+If you encounter connection issues between the MCP service and Visio:
+
+1. **Check if Visio is running**:
+   - The relay service attempts to connect to Visio on startup
+   - Verify Visio is installed and accessible on the host
+
+2. **Verify the relay service**:
+   - Make sure the relay service is running: `host_visio_relay.py`
+   - Check the health endpoint: `http://localhost:8051/health`
+
+3. **Stencil access issues**:
+   - Use `get_available_masters` to see what stencils are currently accessible
+   - Common fallbacks are implemented in [host_visio_relay.py](mdc:host_visio_relay.py)
+
+4. **Error handling**:
+   - Most operations have fallback mechanisms for handling common errors
+   - Check logs in `visio_relay.log` for detailed error information
+
+Key files for diagnostics:
+- [host_visio_relay.py](mdc:host_visio_relay.py) - Contains error handling and fallback logic
+- [src/services/visio_service.py](mdc:src/services/visio_service.py) - Manages connection to the relay

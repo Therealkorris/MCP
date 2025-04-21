@@ -1,0 +1,30 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Visio Operations Reference
+
+The MCP-Visio system supports the following key operations:
+
+1. **Shape Management**:
+   - Add shapes: Use `modify_visio_diagram` with `add_shape` operation
+   - Update shapes: Use `modify_visio_diagram` with `update_shape` operation  
+   - Delete shapes: Use `modify_visio_diagram` with `delete_shape` operation
+
+2. **Connection Management**:
+   - Create connections: Use `modify_visio_diagram` with `add_connector` operation
+   - Delete connections: Use `modify_visio_diagram` with `delete_connection` operation
+
+3. **Analysis**:
+   - Analyze diagram structure: Use `analyze_visio_diagram`
+   - Verify connections: Use `verify_connections`
+
+4. **Document Management**:
+   - Create new diagrams: Use `create_new_diagram`
+   - Save diagrams: Use `save_diagram`
+   - Export diagrams: Use `export_diagram`
+
+Key source files:
+- Operations implementation: [host_visio_relay.py](mdc:host_visio_relay.py)
+- API definitions: [src/services/mcp_service.py](mdc:src/services/mcp_service.py)

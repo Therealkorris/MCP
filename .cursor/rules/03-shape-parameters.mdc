@@ -1,0 +1,40 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Shape Data Parameters Guide
+
+When working with shapes in MCP-Visio, use these parameter formats:
+
+## Adding Shapes
+```python
+{
+  "master_name": "Rectangle",  # Name of the master shape to add
+  "position": {"x": 4.0, "y": 4.0},  # Position coordinates
+  "size": {"width": 1.5, "height": 1.0},  # Optional size
+  "text": "My shape text"  # Optional text label
+}
+```
+
+## Creating Connectors
+```python
+{
+  "from_shape_id": 1,  # ID of source shape
+  "to_shape_id": 2,  # ID of target shape
+  "text": "Connection label"  # Optional text
+}
+```
+
+## Updating Shapes
+```python
+{
+  "shape_id": 1,  # ID of shape to update
+  "text": "New text",  # New text (optional)
+  "position": {"x": 5.0, "y": 6.0}  # New position (optional)
+}
+```
+
+Reference implementations:
+- [host_visio_relay.py](mdc:host_visio_relay.py)
+- [src/services/mcp_service.py](mdc:src/services/mcp_service.py)

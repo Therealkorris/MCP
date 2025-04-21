@@ -1,0 +1,15 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# MCP-Visio Architecture Overview
+
+This project implements a Microsoft Connected Platform (MCP) server for Visio integration. The architecture consists of:
+
+- [src/services/mcp_service.py](mdc:src/services/mcp_service.py): Handles JSON-RPC message processing for MCP
+- [src/services/visio_service.py](mdc:src/services/visio_service.py): Provides methods for interacting with Visio
+- [visio_api.py](mdc:visio_api.py): FastAPI definitions for the REST endpoints
+- [host_visio_relay.py](mdc:host_visio_relay.py): Windows host relay service that directly interacts with Visio
+
+The system uses a client-server architecture where the MCP service runs in a container and communicates with Visio via the relay service running on the Windows host.

@@ -107,19 +107,9 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"status": "error", "message": "Not connected to Visio"}
             
-            # Handle special 'active' keyword for current document
-            if file_path.lower() == 'active':
-                # Get the active document info first
-                active_doc = self.get_active_document()
-                if active_doc.get("status") != "success":
-                    return {"status": "error", "message": "No active document or unable to access it"}
-                
-                # Use the full path from active document
-                file_path = active_doc.get("full_path", "")
-                if not file_path:
-                    return {"status": "error", "message": "Unable to determine path of active document"}
-            else:
-                # Normalize file path for container environment
+            # Handle special 'active' keyword for current document - pass it directly to host
+            if file_path.lower() != 'active':
+                # Only normalize non-active file paths
                 file_path = self._normalize_file_path(file_path)
             
             # Call relay service to analyze diagram
@@ -169,19 +159,9 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"status": "error", "message": "Not connected to Visio"}
             
-            # Handle special 'active' keyword for current document
-            if file_path.lower() == 'active':
-                # Get the active document info first
-                active_doc = self.get_active_document()
-                if active_doc.get("status") != "success":
-                    return {"status": "error", "message": "No active document or unable to access it"}
-                
-                # Use the full path from active document
-                file_path = active_doc.get("full_path", "")
-                if not file_path:
-                    return {"status": "error", "message": "Unable to determine path of active document"}
-            else:
-                # Normalize file path for container environment
+            # Handle special 'active' keyword for current document - pass it directly to host
+            if file_path.lower() != 'active':
+                # Only normalize non-active file paths
                 file_path = self._normalize_file_path(file_path)
             
             # Call relay service to modify diagram
@@ -221,8 +201,8 @@ class VisioService:
         
         Args:
             file_path: Path to the Visio diagram or 'active' to use the active document
-            shape_ids: List of shape IDs to verify connections for
-        
+            shape_ids: Optional list of shape IDs to filter connections
+            
         Returns:
             Dictionary with verification results
         """
@@ -231,25 +211,15 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"status": "error", "message": "Not connected to Visio"}
             
-            # Handle special 'active' keyword for current document
-            if file_path and file_path.lower() == 'active':
-                # Get the active document info first
-                active_doc = self.get_active_document()
-                if active_doc.get("status") != "success":
-                    return {"status": "error", "message": "No active document or unable to access it"}
-                
-                # Use the full path from active document
-                file_path = active_doc.get("full_path", "")
-                if not file_path:
-                    return {"status": "error", "message": "Unable to determine path of active document"}
-            else:
-                # Normalize file path for container environment
+            # Handle special 'active' keyword for current document - pass it directly to host
+            if file_path.lower() != 'active':
+                # Only normalize non-active file paths
                 file_path = self._normalize_file_path(file_path)
             
             # Call relay service to verify connections
             data = {
                 "file_path": file_path,
-                "shape_ids": shape_ids or []
+                "shape_ids": shape_ids
             }
             
             response = requests.post(f"{self.api_url}/verify-connections", json=data, timeout=30)
@@ -337,9 +307,14 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"status": "error", "message": "Not connected to Visio"}
             
-            # Handle special 'active' keyword for current document
-            if not file_path or file_path.lower() == 'active':
+            # Use 'active' as default if not specified
+            if not file_path:
                 file_path = 'active'
+            
+            # Handle special 'active' keyword for current document - pass it directly to host
+            if file_path.lower() != 'active':
+                # Only normalize non-active file paths
+                file_path = self._normalize_file_path(file_path)
             
             # Call relay service to save diagram
             data = {
@@ -413,7 +388,7 @@ class VisioService:
         
         Args:
             file_path: Path to the Visio diagram or 'active' to use the active document
-            page_index: Index of the page to get shapes from
+            page_index: Index of the page to get shapes from (1-based)
             
         Returns:
             Dictionary with shapes information
@@ -423,19 +398,9 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"status": "error", "message": "Not connected to Visio"}
             
-            # Handle special 'active' keyword for current document
-            if file_path.lower() == 'active':
-                # Get the active document info first
-                active_doc = self.get_active_document()
-                if active_doc.get("status") != "success":
-                    return {"status": "error", "message": "No active document or unable to access it"}
-                
-                # Use the full path from active document
-                file_path = active_doc.get("full_path", "")
-                if not file_path:
-                    return {"status": "error", "message": "Unable to determine path of active document"}
-            else:
-                # Normalize file path for container environment
+            # Handle special 'active' keyword for current document - pass it directly to host
+            if file_path.lower() != 'active':
+                # Only normalize non-active file paths
                 file_path = self._normalize_file_path(file_path)
             
             # Call relay service to get shapes
@@ -474,7 +439,7 @@ class VisioService:
         
         Args:
             file_path: Path to the Visio diagram or 'active' to use the active document
-            format: Export format (png, jpg, pdf, svg)
+            format: Format to export to (png, jpg, pdf, svg)
             output_path: Path to save the exported file
             
         Returns:
@@ -485,19 +450,9 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"status": "error", "message": "Not connected to Visio"}
             
-            # Handle special 'active' keyword for current document
-            if file_path.lower() == 'active':
-                # Get the active document info first
-                active_doc = self.get_active_document()
-                if active_doc.get("status") != "success":
-                    return {"status": "error", "message": "No active document or unable to access it"}
-                
-                # Use the full path from active document
-                file_path = active_doc.get("full_path", "")
-                if not file_path:
-                    return {"status": "error", "message": "Unable to determine path of active document"}
-            else:
-                # Normalize file path for container environment
+            # Handle special 'active' keyword for current document - pass it directly to host
+            if file_path.lower() != 'active':
+                # Only normalize non-active file paths
                 file_path = self._normalize_file_path(file_path)
             
             # Call relay service to export diagram
@@ -572,7 +527,7 @@ class VisioService:
         Get a list of available master shapes from all open stencils.
         
         Returns:
-            Dictionary with list of available master shapes by stencil
+            Dictionary with stencils and their master shapes
         """
         try:
             if not self.is_connected:
@@ -597,9 +552,149 @@ class VisioService:
                     **result.get("data", {})
                 }
             else:
-                return {"status": "error", "message": f"Failed to get masters: {response.text}"}
+                return {"status": "error", "message": f"Failed to get available masters: {response.text}"}
         
         except Exception as e:
-            logger.error(f"Error getting masters: {e}")
+            logger.error(f"Error getting available masters: {e}")
+            logger.error(traceback.format_exc())
+            return {"status": "error", "message": str(e)}
+            
+    def image_to_diagram(self, image_path: str, output_path: str = None, detection_level: str = "standard") -> Dict[str, Any]:
+        """
+        Convert an image (screenshot, photo, etc.) to a Visio diagram.
+        
+        This method analyzes an image and attempts to create a Visio diagram that represents
+        the shapes, connections and layout found in the image. Currently this is a framework
+        for future AI-based image analysis capabilities.
+        
+        Args:
+            image_path: Path to the input image file
+            output_path: Path where the resulting Visio diagram should be saved
+            detection_level: Level of detail for shape detection (simple, standard, detailed)
+            
+        Returns:
+            Dictionary with operation results
+        """
+        try:
+            if not self.is_connected:
+                if not self.connect_to_visio():
+                    return {"status": "error", "message": "Not connected to Visio"}
+
+            # Normalize file path for container environment
+            image_path = self._normalize_file_path(image_path)
+            
+            # Validate image file exists
+            if not os.path.exists(image_path):
+                return {"status": "error", "message": f"Image file not found: {image_path}"}
+                
+            # Set default output path if not provided
+            if not output_path:
+                # Create output in same directory as input with .vsdx extension
+                base_name = os.path.basename(image_path)
+                name_without_ext = os.path.splitext(base_name)[0]
+                output_dir = os.path.dirname(image_path)
+                output_path = os.path.join(output_dir, f"{name_without_ext}_diagram.vsdx")
+            
+            # Normalize output path
+            output_path = self._normalize_file_path(output_path)
+            
+            # For the initial implementation, we'll create a simple diagram with placeholder elements
+            # First, create a new diagram
+            new_diagram = self.create_new_diagram("BASIC_M.vssx", output_path)
+            if new_diagram.get("status") != "success":
+                return {"status": "error", "message": f"Failed to create new diagram: {new_diagram.get('message')}"}
+                
+            # Get the active document for adding shapes
+            doc_info = self.get_active_document()
+            if doc_info.get("status") != "success":
+                return {"status": "error", "message": f"Failed to access active document: {doc_info.get('message')}"}
+            
+            # Log that we're starting image analysis (placeholder for actual image analysis)
+            logger.info(f"Starting image analysis of {image_path} with detection level: {detection_level}")
+            
+            # Placeholder for actual image analysis results
+            # In a future implementation, this would use computer vision to detect shapes
+            mock_analysis_results = {
+                "shapes": [
+                    {"type": "Rectangle", "x": 3, "y": 3, "width": 2, "height": 1.5, "text": "Detected Rectangle", "fill_color": "blue"},
+                    {"type": "Circle", "x": 7, "y": 3, "width": 1.5, "height": 1.5, "text": "Detected Circle", "fill_color": "red"},
+                    {"type": "Diamond", "x": 5, "y": 7, "width": 2, "height": 1.5, "text": "Detected Diamond", "fill_color": "green"}
+                ],
+                "connections": [
+                    {"from_index": 0, "to_index": 1, "text": "Connection 1", "line_pattern": "dashed"},
+                    {"from_index": 1, "to_index": 2, "text": "Connection 2", "line_pattern": "dotted"}
+                ]
+            }
+            
+            # Track created shapes and their IDs
+            created_shapes = []
+            
+            # Add detected shapes to the diagram
+            for shape_info in mock_analysis_results["shapes"]:
+                shape_data = {
+                    "master_name": shape_info["type"],
+                    "position": {"x": shape_info["x"], "y": shape_info["y"]},
+                    "size": {"width": shape_info["width"], "height": shape_info["height"]},
+                    "text": shape_info["text"],
+                    "fill_color": shape_info["fill_color"]
+                }
+                
+                # Add the shape
+                shape_result = self.modify_diagram(output_path, "add_shape", shape_data)
+                if shape_result.get("status") == "success":
+                    created_shapes.append({
+                        "index": len(created_shapes),
+                        "id": shape_result.get("shape_id"),
+                        "name": shape_result.get("shape_name")
+                    })
+                    logger.info(f"Added shape: {shape_info['type']} at ({shape_info['x']}, {shape_info['y']})")
+                else:
+                    logger.warning(f"Failed to add shape: {shape_result.get('message')}")
+            
+            # Add connections between shapes
+            for conn_info in mock_analysis_results["connections"]:
+                # Skip if shape indices are invalid
+                if conn_info["from_index"] >= len(created_shapes) or conn_info["to_index"] >= len(created_shapes):
+                    logger.warning(f"Invalid shape indices for connection: {conn_info}")
+                    continue
+                
+                # Get the shape IDs
+                from_shape_id = created_shapes[conn_info["from_index"]]["id"]
+                to_shape_id = created_shapes[conn_info["to_index"]]["id"]
+                
+                # Create connector data
+                connector_data = {
+                    "from_shape_id": from_shape_id,
+                    "to_shape_id": to_shape_id,
+                    "text": conn_info.get("text", ""),
+                    "line_pattern": conn_info.get("line_pattern", "solid")
+                }
+                
+                # Add the connector
+                conn_result = self.modify_diagram(output_path, "add_connector", connector_data)
+                if conn_result.get("status") == "success":
+                    logger.info(f"Added connection from shape {from_shape_id} to {to_shape_id}")
+                else:
+                    logger.warning(f"Failed to add connection: {conn_result.get('message')}")
+            
+            # Save the diagram
+            save_result = self.save_diagram(output_path)
+            if save_result.get("status") != "success":
+                logger.warning(f"Failed to save diagram: {save_result.get('message')}")
+            
+            # Return success with diagram info
+            return {
+                "status": "success",
+                "message": f"Created diagram from image {image_path}",
+                "diagram_path": output_path,
+                "detected_elements": {
+                    "shapes": len(mock_analysis_results["shapes"]),
+                    "connections": len(mock_analysis_results["connections"])
+                },
+                "note": "This is currently using mock data. Future versions will use AI-based image analysis."
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in image to diagram conversion: {e}")
             logger.error(traceback.format_exc())
             return {"status": "error", "message": str(e)} 

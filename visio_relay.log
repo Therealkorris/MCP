@@ -18,3 +18,94 @@
 2025-04-21 05:22:21,186 - visio-relay - INFO - Connected to Visio application
 2025-04-21 05:22:21,186 - visio-relay - INFO - Auto-reload enabled. Monitoring directories: ['.', 'src', 'src/services']
 2025-04-21 05:22:21,186 - visio-relay - INFO - Make changes to host_visio_relay.py, mcp_service.py, or visio_service.py to trigger reload
+2025-04-21 05:33:04,981 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:33:04,987 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:35:23,009 - visio-relay - INFO - Using already open template: BASIC_M.vssx
+2025-04-21 05:35:33,060 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 05:35:33,071 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 05:35:33,076 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 05:35:42,199 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 05:35:42,211 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 05:35:42,217 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 05:36:10,832 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 05:36:10,832 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:36:10,840 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:36:10,840 - visio-relay - INFO - Auto-reload enabled. Monitoring directories: ['.', 'src', 'src/services']
+2025-04-21 05:36:10,840 - visio-relay - INFO - Make changes to host_visio_relay.py, mcp_service.py, or visio_service.py to trigger reload
+2025-04-21 05:43:02,919 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:43:02,928 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:43:05,043 - visio-relay - WARNING - Error using template Basic.vst: (-2147352567, 'Det oppstod et unntak.', (0, 'testvisio - Visio Professional', '\n\nFinner ikke filen.', None, 0, -2032465466), None)
+2025-04-21 05:43:05,043 - visio-relay - INFO - Trying fallback template: BASIC_M.vssx
+2025-04-21 05:43:28,222 - visio-relay - INFO - Using already open stencil: BASIC_M.vssx
+2025-04-21 05:43:28,228 - visio-relay - INFO - Found similar master shape: Rektangel for request: Rektangel
+2025-04-21 05:43:28,240 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 05:43:28,247 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 05:43:37,673 - visio-relay - INFO - Using already open stencil: BASIC_M.vssx
+2025-04-21 05:43:37,685 - visio-relay - INFO - Found similar master shape: Sirkel for request: Sirkel
+2025-04-21 05:43:37,693 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 05:43:37,699 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 05:43:47,261 - visio-relay - INFO - Using already open stencil: BASIC_M.vssx
+2025-04-21 05:43:47,295 - visio-relay - INFO - Found similar master shape: Rettvinklet trekant for request: Trekant
+2025-04-21 05:43:47,316 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 05:43:47,326 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 05:43:57,542 - visio-relay - ERROR - Error modifying diagram: (-2147352567, 'Det oppstod et unntak.', (0, 'Visio Professional', '\n\nUgyldig parameter.', None, 0, -2032465751), None)
+2025-04-21 05:44:56,220 - visio-relay - ERROR - Error exporting diagram: (-2147352567, 'Det oppstod et unntak.', (0, 'testvisio - Visio Professional', '\n\nDet oppstod et unntak.', None, 0, -2032465768), None)
+2025-04-21 05:48:03,749 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:48:04,263 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:51:00,970 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 05:51:00,971 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:51:00,976 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:51:00,976 - visio-relay - INFO - Auto-reload enabled. Monitoring directories: ['.', 'src', 'src/services']
+2025-04-21 05:51:00,976 - visio-relay - INFO - Make changes to host_visio_relay.py, mcp_service.py, or visio_service.py to trigger reload
+2025-04-21 05:51:59,367 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 05:51:59,368 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:51:59,374 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:51:59,374 - visio-relay - INFO - Auto-reload enabled. Monitoring directories: ['.', 'src', 'src/services']
+2025-04-21 05:51:59,374 - visio-relay - INFO - Make changes to host_visio_relay.py, mcp_service.py, or visio_service.py to trigger reload
+2025-04-21 05:54:04,729 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:54:04,739 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:54:06,832 - visio-relay - WARNING - Error using template Basic.vst: (-2147352567, 'Det oppstod et unntak.', (0, 'testvisio - Visio Professional', '\n\nFinner ikke filen.', None, 0, -2032465466), None)
+2025-04-21 05:54:06,832 - visio-relay - INFO - Trying fallback template: BASIC_M.vssx
+2025-04-21 05:54:28,310 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 05:54:28,327 - visio-relay - INFO - Found similar master shape: Rektangel for request: Rektangel
+2025-04-21 05:54:38,278 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 05:54:38,337 - visio-relay - INFO - Found similar master shape: Sirkel for request: Sirkel
+2025-04-21 05:54:48,634 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 05:54:48,673 - visio-relay - INFO - Found similar master shape: Rettvinklet trekant for request: Trekant
+2025-04-21 05:59:26,548 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 05:59:26,548 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 05:59:27,034 - visio-relay - INFO - Connected to Visio application
+2025-04-21 05:59:27,034 - visio-relay - INFO - Auto-reload enabled. Monitoring directories: ['.', 'src', 'src/services']
+2025-04-21 05:59:27,035 - visio-relay - INFO - Make changes to host_visio_relay.py, mcp_service.py, or visio_service.py to trigger reload
+2025-04-21 06:00:58,056 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 06:00:58,062 - visio-relay - INFO - Connected to Visio application
+2025-04-21 06:01:00,157 - visio-relay - WARNING - Error using template Basic.vst: (-2147352567, 'Det oppstod et unntak.', (0, 'testvisio - Visio Professional', '\n\nFinner ikke filen.', None, 0, -2032465466), None)
+2025-04-21 06:01:00,157 - visio-relay - INFO - Trying fallback template: BASIC_M.vssx
+2025-04-21 06:01:21,407 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 06:01:21,415 - visio-relay - INFO - Found similar master shape: Rektangel for request: Rektangel
+2025-04-21 06:02:43,090 - visio-relay - ERROR - Error getting active document: (-2147023174, 'RPC-serveren er ikke tilgjengelig.', None, None)
+2025-04-21 06:02:55,398 - visio-relay - ERROR - Error creating or saving document: (-2147023174, 'RPC-serveren er ikke tilgjengelig.', None, None)
+2025-04-21 06:03:05,159 - visio-relay - ERROR - Error modifying diagram: (-2147023174, 'RPC-serveren er ikke tilgjengelig.', None, None)
+2025-04-21 06:07:15,889 - visio-relay - INFO - Starting Visio Relay Service
+2025-04-21 06:07:15,889 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 06:07:15,897 - visio-relay - INFO - Connected to Visio application
+2025-04-21 06:07:15,897 - visio-relay - INFO - Auto-reload enabled. Monitoring directories: ['.', 'src', 'src/services']
+2025-04-21 06:07:15,897 - visio-relay - INFO - Make changes to host_visio_relay.py, mcp_service.py, or visio_service.py to trigger reload
+2025-04-21 06:08:38,961 - visio-relay - INFO - Connecting to Visio application...
+2025-04-21 06:08:38,967 - visio-relay - INFO - Connected to Visio application
+2025-04-21 06:09:12,478 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 06:09:12,484 - visio-relay - INFO - Found similar master shape: Rektangel for request: Rektangel
+2025-04-21 06:09:12,574 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 06:09:12,582 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 06:09:22,545 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 06:09:22,555 - visio-relay - INFO - Found similar master shape: Sirkel for request: Sirkel
+2025-04-21 06:09:22,573 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 06:09:22,581 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 06:09:33,114 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 06:09:33,128 - visio-relay - INFO - Found similar master shape: Rettvinklet trekant for request: Trekant
+2025-04-21 06:09:33,148 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 06:09:33,158 - visio-relay - INFO - Direct height assignment failed, trying different method
+2025-04-21 06:10:13,926 - visio-relay - INFO - Using already open stencil: Basic Shapes.vss
+2025-04-21 06:10:13,991 - visio-relay - INFO - Found similar master shape: Stjerne med 5 tagger for request: Stjerne med 5 tagger
+2025-04-21 06:10:14,019 - visio-relay - INFO - Direct width assignment failed, trying different method
+2025-04-21 06:10:14,032 - visio-relay - INFO - Direct height assignment failed, trying different method

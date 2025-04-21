@@ -122,3 +122,136 @@
 3. **create_new_diagram** - Implemented template fallback mechanisms and better path handling.
 
 These fixes should ensure all Visio MCP tools function properly under various conditions, with appropriate fallbacks and error handling. 
+
+## New Capabilities Added
+
+### 1. Color Support
+
+The MCP-Visio integration has been enhanced with color support for shapes. This allows:
+
+- Setting fill colors for shapes (both when creating and updating)
+- Setting line/border colors for shapes
+- Supporting multiple color formats:
+  - Color names (e.g., "red", "blue", "green")
+  - RGB values as strings (e.g., "rgb(255,0,0)")
+  - RGB values as integers
+
+#### Example Usage:
+
+```python
+# Add a red rectangle
+shape_data = {
+  "master_name": "Rectangle",
+  "position": {"x": 4.0, "y": 4.0},
+  "fill_color": "red",  # Using color name
+  "text": "Red Rectangle"
+}
+
+# Update a shape to have blue fill and green border
+update_data = {
+  "shape_id": 1,
+  "fill_color": "rgb(0,0,255)",  # Using RGB string format
+  "line_color": "green"  # Using color name
+}
+```
+
+#### Supported Color Names:
+- red, green, blue, yellow, purple, orange
+- black, white, gray
+- cyan, magenta, brown, pink
+
+### 2. Line Styling
+
+The integration now supports advanced line styling for shape borders and connectors:
+
+- **Line Weight**: Control the thickness of lines with the `line_weight` parameter
+- **Line Pattern**: Choose from different line styles (solid, dashed, dotted, etc.) with the `line_pattern` parameter
+
+#### Example Usage:
+
+```python
+# Add a rectangle with a thick dashed red border
+shape_data = {
+  "master_name": "Rectangle",
+  "position": {"x": 4.0, "y": 4.0},
+  "line_color": "red",
+  "line_weight": 2.5,  # Points
+  "line_pattern": "dashed"
+}
+
+# Create a dotted connector between shapes
+connector_data = {
+  "from_shape_id": 1,
+  "to_shape_id": 2,
+  "line_pattern": "dotted",
+  "line_weight": 1.5
+}
+```
+
+#### Supported Line Patterns:
+- solid, dashed, dotted
+- dash_dot, dash_dot_dot
+- long_dash, long_dash_dot, long_dash_dot_dot
+- round_dot
+
+### 3. Intelligent Diagram Generation
+
+The following capabilities are planned for future development:
+
+1. **Natural language description to diagram**
+2. **Automatic layout optimization**
+3. **Smart connector routing**
+
+## New Capabilities Added (Phase 2)
+
+### 1. Image-to-Diagram Conversion (Preview)
+
+A new capability to convert images into Visio diagrams has been added as a preview feature:
+
+```
+POST /image-to-diagram
+```
+
+This endpoint accepts:
+- `image_path`: Path to the source image file
+- `output_path`: (Optional) Where to save the generated diagram
+- `detection_level`: (Optional) Level of detail for shape detection (simple, standard, detailed)
+
+#### Current Implementation:
+
+The current implementation is a framework with placeholder functionality. It:
+- Creates a new diagram based on a template
+- Adds mock detected shapes and connections
+- Serves as the foundation for future AI-powered image analysis
+
+#### Example Usage:
+
+```python
+# Convert a screenshot to a Visio diagram
+request_data = {
+  "image_path": "C:/Screenshots/flowchart.png",
+  "detection_level": "detailed"
+}
+
+# Result will contain information about the created diagram
+response = requests.post("http://localhost:8000/image-to-diagram", json=request_data)
+result = response.json()
+print(f"Diagram created at: {result['diagram_path']}")
+```
+
+#### Future Development Plans:
+
+1. **Computer Vision Integration**:
+   - Integrate with CV libraries to detect shapes, text, and connections in images
+   - Recognize common diagram patterns (flowcharts, org charts, network diagrams)
+   - Support for different drawing styles and handwritten sketches
+
+2. **Shape Matching**:
+   - Match detected shapes to appropriate Visio master shapes
+   - Preserve relative positioning and sizing from source image
+   - Maintain connection relationships between shapes
+
+3. **Text Recognition**:
+   - Extract and preserve text labels from the source image
+   - Apply text to appropriate shapes and connectors
+   - Support for multiple languages 

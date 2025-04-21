@@ -119,6 +119,8 @@ async def get_active_document():
             return {"status": "no_document", "message": "No Visio document is currently open"}
         
         active_doc = visio_app.ActiveDocument
+        if not active_doc:
+            return {"status": "no_document", "message": "No active Visio document found"}
         
         # Get basic document info
         doc_info = {
@@ -175,9 +177,14 @@ async def analyze_diagram(request: DiagramRequest):
         
         # Handle special 'active' keyword
         if file_path.lower() == 'active':
+            # First check if there are any documents open
+            if visio_app.Documents.Count == 0:
+                return {"status": "error", "message": "No Visio documents are currently open"}
+                
             doc = visio_app.ActiveDocument
             if not doc:
-                return {"status": "error", "message": "No active document"}
+                return {"status": "error", "message": "No active Visio document found"}
+            was_opened = False
         else:
             # Normalize path
             file_path = normalize_file_path(file_path)
@@ -188,7 +195,13 @@ async def analyze_diagram(request: DiagramRequest):
             
             # Open the document
             try:
-                doc = visio_app.Documents.Open(file_path)
+                # Check if already open
+                try:
+                    doc = visio_app.Documents(os.path.basename(file_path))
+                    was_opened = True
+                except:
+                    doc = visio_app.Documents.Open(file_path)
+                    was_opened = False
             except Exception as e:
                 return {"status": "error", "message": f"Failed to open document: {str(e)}"}
         
@@ -306,7 +319,7 @@ async def analyze_diagram(request: DiagramRequest):
             result["pages"].append(page_data)
         
         # Close document if it was opened for analysis
-        if file_path.lower() != 'active':
+        if file_path.lower() != 'active' and not was_opened:
             doc.Close()
         
         return {"status": "success", "data": result}
@@ -330,9 +343,13 @@ async def modify_diagram(request: ModifyRequest):
         
         # Handle special 'active' keyword
         if file_path.lower() == 'active':
+            # First check if there are any documents open
+            if visio_app.Documents.Count == 0:
+                return {"status": "error", "message": "No Visio documents are currently open"}
+                
             doc = visio_app.ActiveDocument
             if not doc:
-                return {"status": "error", "message": "No active document"}
+                return {"status": "error", "message": "No active Visio document found"}
             was_opened = False
         else:
             # Normalize path
@@ -490,6 +507,115 @@ async def modify_diagram(request: ModifyRequest):
             except Exception as size_err:
                 logger.warning(f"Error setting shape size: {size_err}")
             
+            # Set fill color if provided
+            try:
+                if "fill_color" in shape_data:
+                    fill_color = shape_data["fill_color"]
+                    # RGB color format as integer
+                    if isinstance(fill_color, int):
+                        shape.Cells("FillForegnd").FormulaForceU = f"RGB({(fill_color & 0xFF0000) >> 16},{(fill_color & 0xFF00) >> 8},{fill_color & 0xFF})"
+                    # RGB color format as string "rgb(r,g,b)"
+                    elif isinstance(fill_color, str) and fill_color.startswith("rgb"):
+                        rgb = fill_color.replace("rgb(", "").replace(")", "").split(",")
+                        if len(rgb) == 3:
+                            r, g, b = [int(x.strip()) for x in rgb]
+                            shape.Cells("FillForegnd").FormulaForceU = f"RGB({r},{g},{b})"
+                    # Color name as string
+                    elif isinstance(fill_color, str):
+                        # Map common color names to RGB values
+                        color_map = {
+                            "red": "RGB(255,0,0)",
+                            "green": "RGB(0,255,0)",
+                            "blue": "RGB(0,0,255)",
+                            "yellow": "RGB(255,255,0)",
+                            "purple": "RGB(128,0,128)",
+                            "orange": "RGB(255,165,0)",
+                            "black": "RGB(0,0,0)",
+                            "white": "RGB(255,255,255)",
+                            "gray": "RGB(128,128,128)",
+                            "cyan": "RGB(0,255,255)",
+                            "magenta": "RGB(255,0,255)",
+                            "brown": "RGB(165,42,42)",
+                            "pink": "RGB(255,192,203)"
+                        }
+                        color_formula = color_map.get(fill_color.lower(), "RGB(255,255,255)")
+                        shape.Cells("FillForegnd").FormulaForceU = color_formula
+                    
+                    # Set fill pattern to solid if not specified
+                    if "fill_pattern" not in shape_data:
+                        shape.Cells("FillPattern").FormulaForceU = "1"
+            except Exception as color_err:
+                logger.warning(f"Error setting fill color: {color_err}")
+                
+            # Set line color if provided
+            try:
+                if "line_color" in shape_data:
+                    line_color = shape_data["line_color"]
+                    # RGB color format as integer
+                    if isinstance(line_color, int):
+                        shape.Cells("LineColor").FormulaForceU = f"RGB({(line_color & 0xFF0000) >> 16},{(line_color & 0xFF00) >> 8},{line_color & 0xFF})"
+                    # RGB color format as string "rgb(r,g,b)"
+                    elif isinstance(line_color, str) and line_color.startswith("rgb"):
+                        rgb = line_color.replace("rgb(", "").replace(")", "").split(",")
+                        if len(rgb) == 3:
+                            r, g, b = [int(x.strip()) for x in rgb]
+                            shape.Cells("LineColor").FormulaForceU = f"RGB({r},{g},{b})"
+                    # Color name as string
+                    elif isinstance(line_color, str):
+                        # Map common color names to RGB values
+                        color_map = {
+                            "red": "RGB(255,0,0)",
+                            "green": "RGB(0,255,0)",
+                            "blue": "RGB(0,0,255)",
+                            "yellow": "RGB(255,255,0)",
+                            "purple": "RGB(128,0,128)",
+                            "orange": "RGB(255,165,0)",
+                            "black": "RGB(0,0,0)",
+                            "white": "RGB(255,255,255)",
+                            "gray": "RGB(128,128,128)",
+                            "cyan": "RGB(0,255,255)",
+                            "magenta": "RGB(255,0,255)",
+                            "brown": "RGB(165,42,42)",
+                            "pink": "RGB(255,192,203)"
+                        }
+                        color_formula = color_map.get(line_color.lower(), "RGB(0,0,0)")
+                        shape.Cells("LineColor").FormulaForceU = color_formula
+            except Exception as color_err:
+                logger.warning(f"Error setting line color: {color_err}")
+                
+            # Set line weight/thickness if provided
+            try:
+                if "line_weight" in shape_data:
+                    line_weight = shape_data["line_weight"]
+                    shape.Cells("LineWeight").FormulaForceU = f"{line_weight} pt"
+            except Exception as weight_err:
+                logger.warning(f"Error setting line weight: {weight_err}")
+                
+            # Set line pattern/style if provided
+            try:
+                if "line_pattern" in shape_data:
+                    # Map line pattern names to pattern values
+                    pattern_map = {
+                        "solid": 1,
+                        "dashed": 2,
+                        "dotted": 3,
+                        "dash_dot": 4,
+                        "dash_dot_dot": 5,
+                        "long_dash": 6,
+                        "long_dash_dot": 7,
+                        "long_dash_dot_dot": 8,
+                        "round_dot": 10
+                    }
+                    
+                    line_pattern = shape_data["line_pattern"]
+                    if isinstance(line_pattern, str):
+                        pattern_value = pattern_map.get(line_pattern.lower(), 1)
+                        shape.Cells("LinePattern").FormulaForceU = str(pattern_value)
+                    else:
+                        shape.Cells("LinePattern").FormulaForceU = str(line_pattern)
+            except Exception as pattern_err:
+                logger.warning(f"Error setting line pattern: {pattern_err}")
+            
             # Update result with shape info
             result.update({
                 "shape_id": shape.ID,
@@ -528,6 +654,115 @@ async def modify_diagram(request: ModifyRequest):
             
             if "height" in shape_data:
                 shape.Cells("Height").SetResult(shape_data["height"], 0)
+            
+            # Update fill color if provided
+            try:
+                if "fill_color" in shape_data:
+                    fill_color = shape_data["fill_color"]
+                    # RGB color format as integer
+                    if isinstance(fill_color, int):
+                        shape.Cells("FillForegnd").FormulaForceU = f"RGB({(fill_color & 0xFF0000) >> 16},{(fill_color & 0xFF00) >> 8},{fill_color & 0xFF})"
+                    # RGB color format as string "rgb(r,g,b)"
+                    elif isinstance(fill_color, str) and fill_color.startswith("rgb"):
+                        rgb = fill_color.replace("rgb(", "").replace(")", "").split(",")
+                        if len(rgb) == 3:
+                            r, g, b = [int(x.strip()) for x in rgb]
+                            shape.Cells("FillForegnd").FormulaForceU = f"RGB({r},{g},{b})"
+                    # Color name as string
+                    elif isinstance(fill_color, str):
+                        # Map common color names to RGB values
+                        color_map = {
+                            "red": "RGB(255,0,0)",
+                            "green": "RGB(0,255,0)",
+                            "blue": "RGB(0,0,255)",
+                            "yellow": "RGB(255,255,0)",
+                            "purple": "RGB(128,0,128)",
+                            "orange": "RGB(255,165,0)",
+                            "black": "RGB(0,0,0)",
+                            "white": "RGB(255,255,255)",
+                            "gray": "RGB(128,128,128)",
+                            "cyan": "RGB(0,255,255)",
+                            "magenta": "RGB(255,0,255)",
+                            "brown": "RGB(165,42,42)",
+                            "pink": "RGB(255,192,203)"
+                        }
+                        color_formula = color_map.get(fill_color.lower(), "RGB(255,255,255)")
+                        shape.Cells("FillForegnd").FormulaForceU = color_formula
+                    
+                    # Set fill pattern to solid if not specified
+                    if "fill_pattern" not in shape_data:
+                        shape.Cells("FillPattern").FormulaForceU = "1"
+            except Exception as color_err:
+                logger.warning(f"Error setting fill color: {color_err}")
+                
+            # Update line color if provided
+            try:
+                if "line_color" in shape_data:
+                    line_color = shape_data["line_color"]
+                    # RGB color format as integer
+                    if isinstance(line_color, int):
+                        shape.Cells("LineColor").FormulaForceU = f"RGB({(line_color & 0xFF0000) >> 16},{(line_color & 0xFF00) >> 8},{line_color & 0xFF})"
+                    # RGB color format as string "rgb(r,g,b)"
+                    elif isinstance(line_color, str) and line_color.startswith("rgb"):
+                        rgb = line_color.replace("rgb(", "").replace(")", "").split(",")
+                        if len(rgb) == 3:
+                            r, g, b = [int(x.strip()) for x in rgb]
+                            shape.Cells("LineColor").FormulaForceU = f"RGB({r},{g},{b})"
+                    # Color name as string
+                    elif isinstance(line_color, str):
+                        # Map common color names to RGB values
+                        color_map = {
+                            "red": "RGB(255,0,0)",
+                            "green": "RGB(0,255,0)",
+                            "blue": "RGB(0,0,255)",
+                            "yellow": "RGB(255,255,0)",
+                            "purple": "RGB(128,0,128)",
+                            "orange": "RGB(255,165,0)",
+                            "black": "RGB(0,0,0)",
+                            "white": "RGB(255,255,255)",
+                            "gray": "RGB(128,128,128)",
+                            "cyan": "RGB(0,255,255)",
+                            "magenta": "RGB(255,0,255)",
+                            "brown": "RGB(165,42,42)",
+                            "pink": "RGB(255,192,203)"
+                        }
+                        color_formula = color_map.get(line_color.lower(), "RGB(0,0,0)")
+                        shape.Cells("LineColor").FormulaForceU = color_formula
+            except Exception as color_err:
+                logger.warning(f"Error setting line color: {color_err}")
+                
+            # Update line weight/thickness if provided
+            try:
+                if "line_weight" in shape_data:
+                    line_weight = shape_data["line_weight"]
+                    shape.Cells("LineWeight").FormulaForceU = f"{line_weight} pt"
+            except Exception as weight_err:
+                logger.warning(f"Error setting line weight: {weight_err}")
+                
+            # Update line pattern/style if provided
+            try:
+                if "line_pattern" in shape_data:
+                    # Map line pattern names to pattern values
+                    pattern_map = {
+                        "solid": 1,
+                        "dashed": 2,
+                        "dotted": 3,
+                        "dash_dot": 4,
+                        "dash_dot_dot": 5,
+                        "long_dash": 6,
+                        "long_dash_dot": 7,
+                        "long_dash_dot_dot": 8,
+                        "round_dot": 10
+                    }
+                    
+                    line_pattern = shape_data["line_pattern"]
+                    if isinstance(line_pattern, str):
+                        pattern_value = pattern_map.get(line_pattern.lower(), 1)
+                        shape.Cells("LinePattern").FormulaForceU = str(pattern_value)
+                    else:
+                        shape.Cells("LinePattern").FormulaForceU = str(line_pattern)
+            except Exception as pattern_err:
+                logger.warning(f"Error setting line pattern: {pattern_err}")
             
             # Update result with shape info
             result.update({
@@ -730,7 +965,14 @@ async def modify_diagram(request: ModifyRequest):
             return {"status": "error", "message": f"Unknown operation: {operation}"}
         
         # Save the document if it was modified
-        if not was_opened and file_path.lower() != 'active':
+        if file_path.lower() == 'active':
+            # Just save the active document
+            doc.Save()
+        elif was_opened:
+            # Just save but don't close if it was already open
+            doc.Save()
+        else:
+            # Save and close if we opened it specifically for this operation
             doc.Save()
             doc.Close()
         
@@ -754,9 +996,13 @@ async def verify_connections(request: ConnectionsRequest):
         
         # Handle special 'active' keyword
         if file_path.lower() == 'active':
+            # First check if there are any documents open
+            if visio_app.Documents.Count == 0:
+                return {"status": "error", "message": "No Visio documents are currently open"}
+                
             doc = visio_app.ActiveDocument
             if not doc:
-                return {"status": "error", "message": "No active document"}
+                return {"status": "error", "message": "No active Visio document found"}
             was_opened = False
         else:
             # Normalize path
@@ -902,6 +1148,14 @@ async def create_diagram(request: CreateDiagramRequest):
             if not doc:
                 return {"status": "error", "message": "Could not create document with any template"}
             
+            # Ensure document has at least one page
+            if doc.Pages.Count == 0:
+                try:
+                    logger.info("Adding a page to the document as none existed")
+                    doc.Pages.Add()
+                except Exception as page_error:
+                    logger.warning(f"Error adding page to document: {page_error}")
+            
             # Save if path provided
             if save_path:
                 save_path = normalize_file_path(save_path)
@@ -937,9 +1191,13 @@ async def save_diagram(request: SaveDiagramRequest):
         
         # Handle special 'active' keyword or None
         if not file_path or file_path.lower() == 'active':
+            # First check if there are any documents open
+            if visio_app.Documents.Count == 0:
+                return {"status": "error", "message": "No Visio documents are currently open"}
+                
             doc = visio_app.ActiveDocument
             if not doc:
-                return {"status": "error", "message": "No active document"}
+                return {"status": "error", "message": "No active Visio document found"}
             
             # Save the document
             doc.Save()
@@ -1041,9 +1299,13 @@ async def get_shapes_on_page(request: ShapesRequest):
         
         # Handle special 'active' keyword
         if file_path.lower() == 'active':
+            # First check if there are any documents open
+            if visio_app.Documents.Count == 0:
+                return {"status": "error", "message": "No Visio documents are currently open"}
+                
             doc = visio_app.ActiveDocument
             if not doc:
-                return {"status": "error", "message": "No active document"}
+                return {"status": "error", "message": "No active Visio document found"}
             was_opened = False
         else:
             # Normalize path
@@ -1154,9 +1416,13 @@ async def export_diagram(request: ExportRequest):
         
         # Handle special 'active' keyword
         if file_path.lower() == 'active':
+            # First check if there are any documents open
+            if visio_app.Documents.Count == 0:
+                return {"status": "error", "message": "No Visio documents are currently open"}
+                
             doc = visio_app.ActiveDocument
             if not doc:
-                return {"status": "error", "message": "No active document"}
+                return {"status": "error", "message": "No active Visio document found"}
             was_opened = False
         else:
             # Normalize path

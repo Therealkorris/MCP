@@ -11,16 +11,16 @@ app = FastAPI(title="Visio API")
 
 # Define your data models
 class AnalyzeDiagramRequest(BaseModel):
-    file_path: str
+    file_path: Optional[str] = "active"
     analysis_type: Optional[str] = "all"
 
 class ModifyDiagramRequest(BaseModel):
-    file_path: str
+    file_path: Optional[str] = "active"
     operation: str
     shape_data: Dict[str, Any]
 
 class VerifyConnectionsRequest(BaseModel):
-    file_path: str
+    file_path: Optional[str] = "active"
     shape_ids: Optional[List[str]] = None
 
 class CreateDiagramRequest(BaseModel):
@@ -38,6 +38,11 @@ class ExportDiagramRequest(BaseModel):
     file_path: Optional[str] = "active"
     format: Optional[str] = "png"
     output_path: Optional[str] = None
+
+class ImageToDiagramRequest(BaseModel):
+    image_path: str
+    output_path: Optional[str] = None
+    detection_level: Optional[str] = "standard"  # standard, detailed, simple
 
 # Define your endpoints with proper operation_id values
 @app.post("/analyze-diagram", operation_id="analyze_visio_diagram")
@@ -139,4 +144,14 @@ async def get_available_masters():
     from services.visio_service import VisioService
     visio_service = VisioService()
     result = visio_service.get_available_masters()
+    return result
+
+@app.post("/image-to-diagram", operation_id="image_to_diagram")
+async def image_to_diagram(request: ImageToDiagramRequest):
+    """
+    Convert an image (screenshot, photo, etc.) to a Visio diagram
+    """
+    from services.visio_service import VisioService
+    visio_service = VisioService()
+    result = visio_service.image_to_diagram(request.image_path, request.output_path, request.detection_level)
     return result 

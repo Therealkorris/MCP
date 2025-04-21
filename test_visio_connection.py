@@ -123,20 +123,22 @@ def test_modify_diagram(file_path="active", operation="add_shape"):
         if operation == "add_shape":
             shape_data = {
                 "master_name": "Rectangle",
-                "stencil_name": "Basic Shapes.vss",
-                "page_index": 1,
-                "x": 4.0,
-                "y": 4.0,
-                "text": "Test Shape"
+                "stencil_name": "BASIC_M.vssx",
+                "position": {"x": 4.0, "y": 4.0},
+                "size": {"width": 2.0, "height": 1.0},
+                "text": "Test Shape",
+                "fill_color": "#00FF00",
+                "line_color": "#000000"
             }
-        elif operation == "add_connection":
+        elif operation == "add_connector":
             # First, we need to get shapes to connect
             # This is just a placeholder - in a real test, you'd need actual shape IDs
             shape_data = {
                 "from_shape_id": 1,  # Replace with actual shape ID
                 "to_shape_id": 2,    # Replace with actual shape ID
-                "page_index": 1,
-                "text": "Test Connection"
+                "connector_type": "straight",
+                "text": "Test Connection",
+                "line_color": "#FF0000"
             }
         
         # Prepare request

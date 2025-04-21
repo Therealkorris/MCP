@@ -1,6 +1,6 @@
 """
 Visio service for MCP-Visio server.
-Provides functionality to interact with Microsoft Visio using COM automation.
+Provides functionality to interact with Microsoft Visio using a relay service on the host.
 """
 
 import os
@@ -8,6 +8,7 @@ import sys
 import json
 import logging
 import traceback
+import requests
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
@@ -19,34 +20,40 @@ class VisioService:
     
     def __init__(self):
         """Initialize the Visio service."""
-        self.app = None
         self.is_connected = False
+        self.host = os.getenv("VISIO_SERVICE_HOST", "host.docker.internal")
+        self.port = os.getenv("VISIO_SERVICE_PORT", "8051")
+        self.api_url = f"http://{self.host}:{self.port}"
+        
+        # Try to connect to the relay service
         self.connect_to_visio()
     
     def connect_to_visio(self) -> bool:
-        """Connect to Microsoft Visio application."""
+        """Connect to Microsoft Visio via the relay service."""
         try:
-            # Only import win32com on Windows
-            if sys.platform == "win32":
-                import win32com.client
+            # Check if the relay service is running
+            logger.info(f"Checking relay service at {self.api_url}/health")
+            response = requests.get(f"{self.api_url}/health", timeout=5)
+            
+            if response.status_code == 200:
+                # Try to connect to Visio via the relay
+                connect_response = requests.get(f"{self.api_url}/connect", timeout=5)
                 
-                # Try to connect to an existing Visio instance
-                try:
-                    self.app = win32com.client.GetActiveObject("Visio.Application")
-                    logger.info("Connected to existing Visio instance")
-                except:
-                    # Create a new Visio instance
-                    self.app = win32com.client.Dispatch("Visio.Application")
-                    self.app.Visible = True
-                    logger.info("Created new Visio instance")
-                
-                self.is_connected = True
-                return True
+                if connect_response.status_code == 200:
+                    self.is_connected = True
+                    logger.info("Connected to Visio via relay service")
+                    return True
+                else:
+                    logger.error(f"Failed to connect to Visio via relay service: {connect_response.text}")
+                    self.is_connected = False
+                    return False
             else:
-                logger.warning("Visio is only supported on Windows")
+                logger.error(f"Relay service health check failed: {response.status_code}")
+                self.is_connected = False
                 return False
+                
         except Exception as e:
-            logger.error(f"Failed to connect to Visio: {e}")
+            logger.error(f"Failed to connect to relay service: {e}")
             logger.error(traceback.format_exc())
             self.is_connected = False
             return False
@@ -58,37 +65,26 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"error": "Not connected to Visio"}
             
-            # Check if there is an active document
-            if self.app.Documents.Count == 0:
+            # Get active document info from relay service
+            response = requests.get(f"{self.api_url}/active-document", timeout=10)
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                # Handle no document case
+                if result.get("status") == "no_document":
+                    return {
+                        "status": "no_document",
+                        "message": result.get("message", "No Visio document is currently open")
+                    }
+                
+                # Return the data
                 return {
-                    "status": "no_document",
-                    "message": "No Visio document is currently open"
+                    "status": "success",
+                    **result.get("data", {})
                 }
-            
-            # Get active document
-            doc = self.app.ActiveDocument
-            
-            # Get basic document info
-            doc_info = {
-                "status": "success",
-                "name": doc.Name,
-                "path": doc.Path,
-                "full_path": os.path.join(doc.Path, doc.Name) if doc.Path else doc.Name,
-                "pages": [],
-                "pages_count": doc.Pages.Count
-            }
-            
-            # Get information about pages
-            for i in range(1, doc.Pages.Count + 1):
-                page = doc.Pages.Item(i)
-                page_info = {
-                    "name": page.Name,
-                    "index": i,
-                    "shapes_count": page.Shapes.Count
-                }
-                doc_info["pages"].append(page_info)
-            
-            return doc_info
+            else:
+                return {"error": f"Failed to get active document: {response.text}"}
         
         except Exception as e:
             logger.error(f"Error getting active document: {e}")
@@ -97,7 +93,7 @@ class VisioService:
     
     def analyze_diagram(self, file_path: str, analysis_type: str = "all") -> Dict[str, Any]:
         """
-        Analyze a Visio diagram to extract information.
+        Analyze a Visio diagram to extract information via the relay service.
         
         Args:
             file_path: Path to the Visio diagram
@@ -111,54 +107,33 @@ class VisioService:
                 if not self.connect_to_visio():
                     return {"error": "Not connected to Visio"}
             
-            # Check if file exists
-            if not os.path.exists(file_path):
-                return {
-                    "status": "error",
-                    "message": f"File not found: {file_path}"
-                }
+            # Normalize file path for container environment
+            file_path = self._normalize_file_path(file_path)
             
-            # Open the document if not already open
-            try:
-                doc = self.app.Documents(Path(file_path).name)
-                logger.info(f"Using already open document: {file_path}")
-            except:
-                # Open the document
-                doc = self.app.Documents.Open(file_path)
-                logger.info(f"Opened document: {file_path}")
-            
-            # Prepare result structure
-            result = {
-                "status": "success",
+            # Call relay service to analyze diagram
+            data = {
                 "file_path": file_path,
-                "name": doc.Name,
-                "pages": []
+                "analysis_type": analysis_type
             }
             
-            # Analyze each page
-            for i in range(1, doc.Pages.Count + 1):
-                page = doc.Pages.Item(i)
-                page_info = {
-                    "name": page.Name,
-                    "index": i,
-                    "shapes_count": page.Shapes.Count
-                }
-                
-                # Get shapes information based on analysis type
-                if analysis_type in ["structure", "all"]:
-                    page_info["shapes"] = self._get_shapes_info(page)
-                
-                # Get connections information based on analysis type
-                if analysis_type in ["connections", "all"]:
-                    page_info["connections"] = self._get_connections_info(page)
-                
-                # Get text information based on analysis type
-                if analysis_type in ["text", "all"]:
-                    page_info["text"] = self._get_text_info(page)
-                
-                result["pages"].append(page_info)
+            response = requests.post(f"{self.api_url}/analyze-diagram", json=data, timeout=30)
             
-            return result
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("status") == "error":
+                    return {
+                        "status": "error",
+                        "message": result.get("message", "Unknown error")
+                    }
+                
+                # Return the data
+                return {
+                    "status": "success",
+                    **result.get("data", {})
+                }
+            else:
+                return {"error": f"Failed to analyze diagram: {response.text}"}
         
         except Exception as e:
             logger.error(f"Error analyzing diagram: {e}")
@@ -181,6 +156,9 @@ class VisioService:
             if not self.is_connected:
                 if not self.connect_to_visio():
                     return {"error": "Not connected to Visio"}
+            
+            # Normalize file path for container environment
+            file_path = self._normalize_file_path(file_path)
             
             # Check if file exists
             if not os.path.exists(file_path):
@@ -239,6 +217,9 @@ class VisioService:
             if not self.is_connected:
                 if not self.connect_to_visio():
                     return {"error": "Not connected to Visio"}
+            
+            # Normalize file path for container environment
+            file_path = self._normalize_file_path(file_path)
             
             # Run full diagram analysis to get connections
             analysis = self.analyze_diagram(file_path, "connections")
@@ -598,4 +579,40 @@ class VisioService:
         except Exception as e:
             logger.error(f"Error deleting connection: {e}")
             logger.error(traceback.format_exc())
-            return {"error": str(e)} 
+            return {"error": str(e)}
+    
+    def _normalize_file_path(self, file_path: str) -> str:
+        """
+        Normalize file path for container environment.
+        
+        Args:
+            file_path: Original file path
+            
+        Returns:
+            Normalized file path
+        """
+        # If path already exists, return it
+        if os.path.exists(file_path):
+            return file_path
+        
+        # Check if this is a relative path that should be in the visio-files directory
+        if not os.path.isabs(file_path):
+            # Try in the visio-files directory
+            container_path = os.path.join("C:\\visio-files", file_path)
+            if os.path.exists(container_path):
+                logger.info(f"Using container path: {container_path}")
+                return container_path
+        
+        # For paths with forward slashes, convert to backslashes
+        normalized_path = file_path.replace('/', '\\')
+        if os.path.exists(normalized_path):
+            return normalized_path
+        
+        # For paths without drive letter in Windows, assume C:
+        if sys.platform == "win32" and not ':' in normalized_path:
+            windows_path = f"C:{normalized_path}" if normalized_path.startswith('\\') else f"C:\\{normalized_path}"
+            if os.path.exists(windows_path):
+                return windows_path
+            
+        # Return original if all else fails
+        return file_path 

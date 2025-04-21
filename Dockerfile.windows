@@ -1,0 +1,45 @@
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+# Build arguments
+ARG PORT=8050
+
+# Set working directory
+WORKDIR C:\\app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PORT=${PORT} \
+    TRANSPORT=sse \
+    HOST=0.0.0.0
+
+# Install Python 3.12
+RUN powershell -Command \
+    $ErrorActionPreference = 'Stop'; \
+    Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.12.2/python-3.12.2-amd64.exe -OutFile python-installer.exe ; \
+    Start-Process -FilePath python-installer.exe -ArgumentList '/quiet', 'InstallAllUsers=1', 'PrependPath=1', 'Include_test=0' -NoNewWindow -Wait ; \
+    Remove-Item -Force python-installer.exe
+
+# Verify Python installation
+RUN python --version && pip --version
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Ensure PyWin32 is installed (for COM automation with Visio)
+RUN pip install --no-cache-dir pywin32==306
+
+# Register PyWin32
+RUN python -m pip install --upgrade pip && \
+    python -c "import pythoncom"
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE ${PORT}
+
+# Set entrypoint
+ENTRYPOINT ["python", "mcp_server.py"] 

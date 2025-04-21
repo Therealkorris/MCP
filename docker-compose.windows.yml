@@ -1,0 +1,28 @@
+services:
+  mcp-visio:
+    build:
+      context: .
+      dockerfile: Dockerfile.windows
+      args:
+        PORT: 8050
+    container_name: mcp-visio
+    ports:
+      - "8050:8050"
+    environment:
+      - TRANSPORT=sse
+      - HOST=0.0.0.0
+      - PORT=8050
+      - VISIO_SERVICE_HOST=localhost
+      - VISIO_SERVICE_PORT=8051
+    volumes:
+      - type: bind
+        source: ./src
+        target: C:\app\src
+      - type: volume
+        source: visio-data
+        target: C:\Users\ContainerAdministrator\Documents
+    restart: unless-stopped
+    isolation: process
+
+volumes:
+  visio-data: 

@@ -25,4 +25,4 @@ COPY . .
 EXPOSE ${PORT}
 
 # Set entrypoint
-ENTRYPOINT ["python", "src/main.py"] 
+ENTRYPOINT ["python", "mcp_server.py"] 

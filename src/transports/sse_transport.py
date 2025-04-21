@@ -59,46 +59,81 @@ async def health_check():
     )
 
 # SSE endpoint for MCP
-@app.route("/sse", methods=["GET", "POST"])
-async def sse_endpoint(request: Request):
-    """SSE endpoint for MCP JSON-RPC messages."""
+@app.get("/mcp")
+async def sse_endpoint_get(request: Request):
+    """SSE endpoint for MCP - GET handler."""
     try:
-        # Handle POST requests - process MCP messages
-        if request.method == "POST":
-            # Parse the JSON-RPC request
-            data = await request.json()
-            logger.debug(f"Received MCP request: {json.dumps(data, indent=2)}")
-            
-            # Process the MCP message
-            response = await process_message(data)
-            
-            # Return the response
-            return JSONResponse(content=response)
+        # Set response headers
+        response = StreamingResponse(
+            content=event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+                "Access-Control-Allow-Origin": "*",
+                "X-Accel-Buffering": "no"
+            }
+        )
         
-        # Handle GET requests - keep connection open for SSE
-        else:
-            async def event_stream():
-                while True:
-                    # Just keep the connection alive
-                    await asyncio.sleep(60)
-                    yield ""
-                    
-            return StreamingResponse(
-                event_stream(),
-                media_type="text/event-stream",
-                headers={
-                    "Content-Type": "text/event-stream",
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                }
-            )
+        # Add CORS headers
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        
+        return response
     except Exception as e:
-        logger.error(f"Error in SSE endpoint: {e}")
+        logger.error(f"Error in SSE GET endpoint: {e}")
         logger.error(traceback.format_exc())
         return JSONResponse(
             status_code=500,
             content={"detail": str(e)}
         )
+
+async def event_generator():
+    """Generate SSE events."""
+    # Send initial connection established event
+    yield "data: {\"type\":\"connection_established\"}\n\n"
+    
+    # Send heartbeat events
+    counter = 0
+    while True:
+        await asyncio.sleep(3)
+        counter += 1
+        yield f"data: {{\"type\":\"heartbeat\",\"count\":{counter}}}\n\n"
+
+@app.post("/mcp")
+async def sse_endpoint_post(request: Request):
+    """SSE endpoint for MCP - POST handler."""
+    try:
+        # Parse the JSON-RPC request
+        data = await request.json()
+        logger.debug(f"Received MCP request: {json.dumps(data, indent=2)}")
+        
+        # Process the MCP message
+        response = await process_message(data)
+        
+        # Return the response
+        return JSONResponse(content=response)
+    except Exception as e:
+        logger.error(f"Error in SSE POST endpoint: {e}")
+        logger.error(traceback.format_exc())
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(e)}
+        )
+
+@app.options("/mcp")
+async def options_mcp(request: Request):
+    """Handle OPTIONS requests for CORS preflight."""
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400"  # 24 hours
+    }
+    return Response(status_code=204, headers=headers)
 
 def run_sse_transport(host: str, port: int):
     """Run the SSE transport."""
